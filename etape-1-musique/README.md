@@ -4,7 +4,7 @@ L'ESP32 se présente au téléphone comme une enceinte Bluetooth nommée « Inte
 
 Carte conseillée : **D1 mini ESP32** (module WROOM-32, environ 39 × 31 mm). Toute carte ESP32 classique convient ; pas d'ESP32-S3, C3, C6 ni P4, qui n'ont pas de Bluetooth classique.
 
-Le code compile avec PlatformIO (ESP32-WROOM-32, framework Arduino, bibliothèque ESP32-A2DP 1.8.7) mais n'a pas encore été testé sur une vraie carte.
+Le code compile avec PlatformIO (ESP32-WROOM-32, framework Arduino, bibliothèque ESP32-A2DP 1.8.7, organisé en tâches FreeRTOS, un module par élément) mais n'a pas encore été testé sur une vraie carte.
 
 ## Câblage
 
@@ -41,6 +41,20 @@ Le volume du téléphone s'applique en plus du volume de l'intercom.
 Un appui long de 2 secondes sur A éteint presque tout : la LED s'éteint et le téléphone voit l'intercom se déconnecter. Un appui sur A le réveille ; il redémarre et se reconnecte tout seul au téléphone en quelques secondes.
 
 En veille, l'ESP32 ne consomme que quelques µA, mais la carte et l'ampli continuent de consommer un peu : le régulateur et la LED rouge d'alimentation de la D1 mini, et environ 2 à 3 mA pour le MAX98357A. Pour un rangement de plusieurs jours, garde un vrai interrupteur sur la batterie.
+
+## L'app Android
+
+L'app **Intercom Moto** (dossier [`app-android`](../app-android)) se connecte à l'intercom en Bluetooth basse consommation (BLE), en plus de la musique. Elle affiche :
+
+- le téléphone connecté pour la musique, la lecture en cours, la fréquence, le débit et la qualité du signal ;
+- le morceau (titre, artiste, album, piste, position) ;
+- la carte : firmware, puce, mémoire, temps de marche, raison du dernier démarrage.
+
+Et elle commande tout : lecture / pause / stop / pistes, volume de l'intercom et du téléphone, déconnecter / reconnecter / oublier le téléphone, renommer l'intercom, veille automatique, veille profonde, redémarrage, et **mise à jour du firmware** sans câble.
+
+La clé de mise à jour est `OTA_KEY` dans `config.h` (`intercom-moto` par défaut).
+
+**Important** : à partir de la version 1.1.0, la table des partitions change (deux emplacements pour la mise à jour). Le premier flash de cette version se fait **par USB** (`pio run -t upload`), ensuite tout passe par l'app.
 
 ## Mise en route
 

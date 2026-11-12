@@ -7,6 +7,7 @@ Un intercom pour casque moto fait maison : la musique du téléphone en Bluetoot
 | 1 | [etape-1-musique](etape-1-musique) | Lecteur de musique Bluetooth dans le casque, boutons lecture / pistes / volume | 1 × ESP32 |
 | 2 | [etape-2-intercom](etape-2-intercom) | Intercom vocal entre deux casques en ESP-NOW, déclenché à la voix ou au bouton | 2 × ESP32 |
 | 3 | [etape-3-musique-et-intercom](etape-3-musique-et-intercom) | Les deux en même temps : la musique baisse quand l'autre parle. Version sur batterie | 2 × ESP32 |
+| App | [app-android](app-android) | App Android : infos, commandes et mise à jour du firmware de l'étape 1 en BLE | |
 | Bonus | [bonus](bonus) | Antenne externe, stéréo, télécommande au guidon, appels téléphoniques | |
 
 **Carte obligatoire : ESP32 « classique » (ESP32-WROOM-32).** Les ESP32-S3, C3 et C6 n'ont pas de Bluetooth classique et ne peuvent pas recevoir de musique.
