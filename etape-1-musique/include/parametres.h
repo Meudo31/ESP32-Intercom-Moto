@@ -72,3 +72,15 @@
 #ifndef BLE_NOTIFY_PERIOD_MS
 #define BLE_NOTIFY_PERIOD_MS 250
 #endif
+#ifndef GESTE_LONG_MS
+#define GESTE_LONG_MS 600
+#endif
+#ifndef GESTE_TRES_LONG_MS
+#define GESTE_TRES_LONG_MS 3000
+#endif
+#ifndef GESTE_ATTENTE_MS
+#define GESTE_ATTENTE_MS 400
+#endif
+#ifndef PAS_VOLUME_BOUTON
+#define PAS_VOLUME_BOUTON 10
+#endif

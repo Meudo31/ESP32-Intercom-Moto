@@ -1,6 +1,6 @@
 # Étape 1 : la musique Bluetooth dans le casque
 
-L'ESP32 se présente au téléphone comme une enceinte Bluetooth nommée « Intercom Moto ». La musique est envoyée en numérique (I2S) à l'ampli MAX98357A, qui alimente les deux haut-parleurs du casque. Un seul bouton par défaut, pour la veille profonde ; le volume et les pistes se règlent depuis le téléphone. Deux boutons de plus peuvent être ajoutés en option.
+L'ESP32 se présente au téléphone comme une enceinte Bluetooth nommée « Intercom Moto ». La musique est envoyée en numérique (I2S) à l'ampli MAX98357A, qui alimente les deux haut-parleurs du casque. Un seul bouton par défaut, qui fait tout grâce à des combinaisons d'appuis (lecture, pistes, volume, veille). Deux boutons de plus peuvent être ajoutés en option.
 
 Carte conseillée : **D1 mini ESP32** (module WROOM-32, environ 39 × 31 mm). Toute carte ESP32 classique convient ; pas d'ESP32-S3, C3, C6 ni P4, qui n'ont pas de Bluetooth classique.
 
@@ -24,21 +24,33 @@ Sur la D1 mini ESP32, les broches sont marquées IO26, IO25, IO22 et IO32 ; la L
 
 Deux haut-parleurs 8 Ω en parallèle font 4 Ω, ce que le MAX98357A accepte. Pendant les essais, la carte est alimentée par son port USB.
 
-## Les boutons
+## Le bouton A
 
-Le bouton A est toujours là. Pour ajouter B et C, mets `AVEC_BOUTONS` à 1 dans `config.h` et câble B sur GPIO33 et GND, C sur GPIO27 et GND.
+Un seul bouton (entre IO32 et GND) fait tout :
+
+| Geste | Action |
+| --- | --- |
+| Appui court | Lecture / pause |
+| Deux appuis courts | Morceau suivant |
+| Appui court puis appui long | Morceau précédent |
+| Appui long (plus de 0,6 s) | Volume + |
+| Appui long puis appui court | Volume − |
+| Appui très long (3 s, sans relâcher) | Veille profonde |
+
+Pour enchaîner deux appuis, il faut moins de 0,4 s entre les deux ; c'est aussi le petit délai avant qu'un appui seul soit pris en compte. Le volume réglé est celui du téléphone (environ 8 % par appui). Les durées se règlent dans `config.h` (`GESTE_LONG_MS`, `GESTE_TRES_LONG_MS`, `GESTE_ATTENTE_MS`, `PAS_VOLUME_BOUTON`).
+
+### Boutons B et C (option)
+
+Pour les ajouter, mets `AVEC_BOUTONS` à 1 dans `config.h` et câble B sur GPIO33 et GND, C sur GPIO27 et GND.
 
 | Bouton | Appui court | Appui long |
 | --- | --- | --- |
-| A | Lecture / pause | **2 s : veille profonde** |
-| B | Volume + | Piste suivante |
-| C | Volume − | Piste précédente |
-
-Le volume du téléphone s'applique en plus du volume de l'intercom.
+| B | Volume de l'intercom + | Morceau suivant |
+| C | Volume de l'intercom − | Morceau précédent |
 
 ## Veille profonde
 
-Un appui long de 2 secondes sur A éteint presque tout : la LED s'éteint et le téléphone voit l'intercom se déconnecter. Un appui sur A le réveille ; il redémarre et se reconnecte tout seul au téléphone en quelques secondes.
+Un appui très long de 3 secondes sur A éteint presque tout : la LED s'éteint et le téléphone voit l'intercom se déconnecter. Un appui sur A le réveille ; il redémarre et se reconnecte tout seul au téléphone en quelques secondes.
 
 En veille, l'ESP32 ne consomme que quelques µA, mais la carte et l'ampli continuent de consommer un peu : le régulateur et la LED rouge d'alimentation de la D1 mini, et environ 2 à 3 mA pour le MAX98357A. Pour un rangement de plusieurs jours, garde un vrai interrupteur sur la batterie.
 

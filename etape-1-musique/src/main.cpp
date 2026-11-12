@@ -2,8 +2,10 @@
 //
 //  1. L'ESP32 apparaît comme une enceinte Bluetooth (« Intercom Moto ») sur le téléphone.
 //  2. La musique reçue (A2DP) part en I2S vers l'ampli MAX98357A et les haut-parleurs du casque.
-//  3. Bouton A (GPIO32) : appui court = lecture / pause, appui long de 2 s = veille profonde ;
-//     un appui le réveille. Boutons B et C en option (AVEC_BOUTONS dans config.h).
+//  3. Bouton A (GPIO32) : court = lecture / pause, court + court = suivant,
+//     court + long = précédent, long = volume +, long + court = volume -,
+//     très long (3 s) = veille profonde, un appui la réveille.
+//     Boutons B et C en option (AVEC_BOUTONS dans config.h).
 //  4. L'app Android « Intercom Moto » se connecte en Bluetooth basse consommation (BLE) :
 //     elle affiche toutes les infos, envoie les commandes et met à jour le firmware.
 //

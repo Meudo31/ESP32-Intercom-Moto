@@ -3,10 +3,11 @@
 #include <Arduino.h>
 #include "bouton.h"
 #include "commandes.h"
+#include "geste.h"
 #include "parametres.h"
 
 static void tacheBoutons(void *) {
-  Bouton a(BROCHE_BOUTON_A, 2000);  // appui long de 2 s pour éviter une veille par erreur
+  BoutonGestes a(BROCHE_BOUTON_A, GESTE_LONG_MS, GESTE_TRES_LONG_MS, GESTE_ATTENTE_MS);
   a.begin();
 #if AVEC_BOUTONS
   Bouton b(BROCHE_BOUTON_B), c(BROCHE_BOUTON_C);
@@ -15,8 +16,13 @@ static void tacheBoutons(void *) {
 #endif
   for (;;) {
     switch (a.lire()) {
-      case Appui::COURT: commandeEnvoyer(Cmd::BASCULER); break;
-      case Appui::LONG:  commandeEnvoyer(Cmd::VEILLE); break;
+      case Geste::COURT:      commandeEnvoyer(Cmd::BASCULER); break;
+      case Geste::DOUBLE:     commandeEnvoyer(Cmd::SUIVANT); break;
+      case Geste::COURT_LONG: commandeEnvoyer(Cmd::PRECEDENT); break;
+      case Geste::LONG:       commandeEnvoyer(Cmd::VOLUME_TEL_PLUS, PAS_VOLUME_BOUTON); break;
+      case Geste::LONG_LONG:  commandeEnvoyer(Cmd::VOLUME_TEL_PLUS, 2 * PAS_VOLUME_BOUTON); break;
+      case Geste::LONG_COURT: commandeEnvoyer(Cmd::VOLUME_TEL_PLUS, -PAS_VOLUME_BOUTON); break;
+      case Geste::TRES_LONG:  commandeEnvoyer(Cmd::VEILLE); break;
       default: break;
     }
 #if AVEC_BOUTONS

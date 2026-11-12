@@ -9,7 +9,14 @@
 // Volume de l'intercom au premier démarrage, de 0 à 100 % (ensuite mémorisé).
 // Le volume du téléphone s'applique en plus.
 #define VOLUME_DEPART 100
-// Le bouton A (veille profonde, lecture / pause) est toujours présent.
+// Le bouton A est toujours présent. Combinaisons d'appuis :
+//   court = lecture / pause         court + court = morceau suivant
+//   court + long = morceau précédent  long = volume +    long + court = volume -
+//   très long (maintenu) = veille profonde ; un appui la réveille
+#define GESTE_LONG_MS       600    // un appui plus long que ça est « long »
+#define GESTE_TRES_LONG_MS 3000    // durée de l'appui « très long » (veille)
+#define GESTE_ATTENTE_MS    400    // délai pour enchaîner un second appui
+#define PAS_VOLUME_BOUTON    10    // pas de volume du téléphone, sur 127 (10 = environ 8 %)
 // Boutons B et C : 0 = absents, 1 = sur GPIO33 et 27 (volume et pistes).
 #define AVEC_BOUTONS 0
 // Veille automatique après N minutes sans téléphone ni app connectés, 0 = jamais

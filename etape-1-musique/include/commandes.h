@@ -7,6 +7,7 @@ enum class Cmd : uint8_t {
   VOLUME,         // valeur : 0 à 100
   VOLUME_PLUS,    // valeur : pas
   VOLUME_TEL,     // valeur : 0 à 127
+  VOLUME_TEL_PLUS,  // valeur : pas (sur 127)
   VEILLE,
   VEILLE_AUTO,    // valeur : minutes
   REDEMARRER,

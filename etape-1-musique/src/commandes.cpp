@@ -39,6 +39,10 @@ static void executer(const Commande &c) {
     case Cmd::VOLUME:      changerVolume(c.valeur); break;
     case Cmd::VOLUME_PLUS: changerVolume(audioVolume() + c.valeur); break;
     case Cmd::VOLUME_TEL:  musiqueSetVolumeTel(constrain(c.valeur, 0, 127)); break;
+    case Cmd::VOLUME_TEL_PLUS:
+      musiqueSetVolumeTel(constrain((int)musiqueVolumeTel() + c.valeur, 0, 127));
+      Serial.printf("[Commande] Volume du téléphone : %u / 127\n", musiqueVolumeTel());
+      break;
     case Cmd::VEILLE:      veilleProfonde(); break;
     case Cmd::VEILLE_AUTO:
       reglagesSetVeilleAuto(constrain(c.valeur, 0, 240));

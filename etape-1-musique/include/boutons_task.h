@@ -1,3 +1,3 @@
-// Tâche boutons : A (lecture / pause, veille), B et C en option (volume, pistes).
+// Tâche boutons : A (combinaisons d'appuis, voir geste.h et config.h), B et C en option.
 #pragma once
 void boutonsDemarrer();
