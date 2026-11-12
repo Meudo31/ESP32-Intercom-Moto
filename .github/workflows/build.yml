@@ -1,0 +1,29 @@
+name: Build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        etape: [etape-1-musique, etape-2-intercom, etape-3-musique-et-intercom]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('**/platformio.ini') }}
+      - run: pip install platformio
+      - name: Config par défaut
+        run: cp ${{ matrix.etape }}/include/config.example.h ${{ matrix.etape }}/include/config.h
+      - run: pio run -d ${{ matrix.etape }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.etape }}
+          path: ${{ matrix.etape }}/.pio/build/esp32/firmware.bin
