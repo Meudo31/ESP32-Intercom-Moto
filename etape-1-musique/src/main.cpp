@@ -4,9 +4,12 @@
 //  1. L'ESP32 apparaît comme une enceinte Bluetooth (« Intercom Moto ») sur le téléphone.
 //  2. La musique reçue (A2DP) est envoyée en numérique (I2S) à l'ampli MAX98357A,
 //     qui alimente les haut-parleurs du casque.
-//  3. Trois boutons pilotent la lecture (AVRCP) et le volume.
+//  3. En option (AVEC_BOUTONS à 1 dans config.h), trois boutons pilotent la lecture
+//     (AVRCP) et le volume. Sans boutons, tout se règle depuis le téléphone.
 //
-// Boutons (entre la broche et GND) :
+// Carte conseillée : D1 mini ESP32 (WROOM-32). Toute carte ESP32 classique convient.
+//
+// Boutons (entre la broche et GND), seulement si AVEC_BOUTONS vaut 1 :
 //   A : court = lecture / pause
 //   B : court = volume +, long = piste suivante
 //   C : court = volume -, long = piste précédente
@@ -17,8 +20,14 @@
 #include <Arduino.h>
 #include "BluetoothA2DPSink.h"
 #include "driver/i2s.h"
-#include "bouton.h"
 #include "config.h"
+
+#ifndef AVEC_BOUTONS
+#define AVEC_BOUTONS 0
+#endif
+#if AVEC_BOUTONS
+#include "bouton.h"
+#endif
 
 // ---------- Broches ----------
 #define BROCHE_I2S_BCLK  26   // MAX98357A : BCLK
@@ -27,7 +36,9 @@
 #define BROCHE_LED        2   // LED bleue de la carte : allumée quand le téléphone est connecté
 #define PORT_HP          I2S_NUM_0
 
+#if AVEC_BOUTONS
 Bouton boutonA(32), boutonB(33), boutonC(27);
+#endif
 BluetoothA2DPSink a2dp;
 
 volatile int volume = VOLUME_DEPART;    // 0 à 100 %
@@ -99,10 +110,13 @@ void setup() {
   Serial.begin(115200);
   Serial.println("\nIntercom moto - étape 1 : musique Bluetooth");
   pinMode(BROCHE_LED, OUTPUT);
+#if AVEC_BOUTONS
   boutonA.begin();
   boutonB.begin();
   boutonC.begin();
-  appliquerVolume(VOLUME_DEPART);
+#endif
+  // Sans boutons, le volume local reste au maximum : c'est le téléphone qui règle le volume.
+  appliquerVolume(AVEC_BOUTONS ? VOLUME_DEPART : 100);
 
   initHautParleur();
   a2dp.set_stream_reader(recevoirMusique, false);  // false : on gère l'I2S nous-mêmes
@@ -113,6 +127,7 @@ void setup() {
 }
 
 void loop() {
+#if AVEC_BOUTONS
   switch (boutonA.lire()) {
     case Appui::COURT:
       if (a2dp.get_audio_state() == ESP_A2D_AUDIO_STATE_STARTED) {
@@ -136,4 +151,7 @@ void loop() {
     default: break;
   }
   delay(5);
+#else
+  delay(100);  // rien à surveiller : la musique est gérée par la pile Bluetooth
+#endif
 }
