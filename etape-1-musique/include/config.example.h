@@ -25,6 +25,9 @@
 // Clé demandée par l'app pour mettre à jour le firmware par Bluetooth
 #define OTA_KEY "intercom-moto"
 
+// Mise à jour par Wi-Fi : durée d'ouverture du point d'accès (secondes)
+#define WIFI_OTA_DUREE_S 300
+
 // ---------- Broches ----------
 #define BROCHE_I2S_BCLK  26   // MAX98357A : BCLK
 #define BROCHE_I2S_LRC   25   // MAX98357A : LRC
@@ -45,6 +48,8 @@
 #define SURVEILLANCE_PILE 3072
 #define LED_PRIO          1
 #define LED_PILE          2048
+#define WIFI_OTA_PRIO     2
+#define WIFI_OTA_PILE     6144
 
 // Période d'envoi des données à l'app (ms)
 #define BLE_NOTIFY_PERIOD_MS 250

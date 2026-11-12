@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "parametres.h"
 #include "system_events.h"
+#include "wifi_ota.h"
 
 static volatile bool s_active = false;
 static volatile bool s_restart = false;
@@ -33,6 +34,7 @@ std::string bleOtaControl(const std::string &cmd) {
     unsigned long size = 0;
     if (sscanf(cmd.c_str() + 6, "%lu %39s %63s", &size, md5, key) < 3) return "ERR commande BEGIN invalide";
     if (strcmp(key, OTA_KEY) != 0) return "ERR cle OTA invalide";
+    if (wifiOtaActif()) return "ERR mise a jour Wi-Fi en cours";
     if (s_active) Update.abort();
     if (size == 0 || size > ESP.getFreeSketchSpace())
       return "ERR fichier trop gros pour la partition OTA";
@@ -55,6 +57,12 @@ std::string bleOtaControl(const std::string &cmd) {
     s_active = false;
     s_restart = true;
     return "DONE";
+  }
+
+  if (cmd.rfind("WIFI ", 0) == 0) {
+    // WIFI <clé> : ouvre le point d'accès Wi-Fi pour une mise à jour plus rapide
+    if (cmd.substr(5) != OTA_KEY) return "ERR cle OTA invalide";
+    return wifiOtaDemarrer();
   }
 
   if (cmd == "ABORT") {

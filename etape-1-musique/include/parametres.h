@@ -84,3 +84,12 @@
 #ifndef PAS_VOLUME_BOUTON
 #define PAS_VOLUME_BOUTON 10
 #endif
+#ifndef WIFI_OTA_DUREE_S
+#define WIFI_OTA_DUREE_S 300
+#endif
+#ifndef WIFI_OTA_PRIO
+#define WIFI_OTA_PRIO 2
+#endif
+#ifndef WIFI_OTA_PILE
+#define WIFI_OTA_PILE 6144
+#endif

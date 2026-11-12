@@ -8,7 +8,7 @@
 #define BLE_UUID_MEDIA    "8a5c0003-2763-4123-8f80-5a3b7b30e82c"  // read : JSON téléphone + morceau
 #define BLE_UUID_INFO     "8a5c0004-2763-4123-8f80-5a3b7b30e82c"  // read : JSON carte et firmware
 #define BLE_UUID_COMMAND  "8a5c0005-2763-4123-8f80-5a3b7b30e82c"  // write : "cle=valeur&cle2=valeur2"
-#define BLE_UUID_OTA_CTRL "8a5c0006-2763-4123-8f80-5a3b7b30e82c"  // write, notify : BEGIN / END / ABORT
+#define BLE_UUID_OTA_CTRL "8a5c0006-2763-4123-8f80-5a3b7b30e82c"  // write, notify : BEGIN / END / ABORT / WIFI
 #define BLE_UUID_OTA_DATA "8a5c0007-2763-4123-8f80-5a3b7b30e82c"  // write : morceaux du .bin
 
 // Paquet DATA, version 1, little-endian, 32 octets :
@@ -47,3 +47,7 @@
 //   deconnecter=1     déconnecte le téléphone
 //   reconnecter=1     se reconnecte au dernier téléphone
 //   oublier=1         oublie le dernier téléphone (il faudra le réappairer)
+
+// Mise à jour par Wi-Fi : OTA_CTRL « WIFI <clé> » -> notification « WIFI <ssid> <mot de passe> ».
+// Le téléphone rejoint ce Wi-Fi puis envoie POST http://192.168.4.1/update?key=<clé>&md5=<md5>
+// (multipart/form-data, champ « firmware ») ; réponse « DONE » (redémarrage) ou « ERR <raison> ».
