@@ -23,6 +23,7 @@ public class OtaActivity extends Activity implements BleLink.Listener {
     private TextView deviceInfo, fileInfo, status;
     private Button btnPick, btnUpload;
     private ProgressBar progress;
+    private RadioButton viaWifi;
 
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -47,6 +48,13 @@ public class OtaActivity extends Activity implements BleLink.Listener {
         btnPick = findViewById(R.id.btnPick);
         btnUpload = findViewById(R.id.btnUpload);
         progress = findViewById(R.id.progress);
+        viaWifi = findViewById(R.id.viaWifi);
+        if (Build.VERSION.SDK_INT < 29) {
+            viaWifi.setEnabled(false);
+            viaWifi.setText(R.string.via_wifi_old);
+        } else {
+            viaWifi.setChecked(getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean("wifi", true));
+        }
 
         keyEdit.setText(getSharedPreferences(PREFS, MODE_PRIVATE).getString("key", "intercom-moto"));
         btnPick.setOnClickListener(v -> pickFile());
@@ -71,7 +79,9 @@ public class OtaActivity extends Activity implements BleLink.Listener {
         super.onPause();
         link.removeListener(this);
         SharedPreferences.Editor e = getSharedPreferences(PREFS, MODE_PRIVATE).edit();
-        e.putString("key", keyEdit.getText().toString()).apply();
+        e.putString("key", keyEdit.getText().toString());
+        e.putBoolean("wifi", viaWifi.isChecked());
+        e.apply();
     }
 
     @Override
@@ -165,11 +175,13 @@ public class OtaActivity extends Activity implements BleLink.Listener {
         final Uri uri = fileUri;
         final String md5 = fileMd5;
         final long size = fileSize;
+        final boolean wifi = viaWifi.isChecked() && Build.VERSION.SDK_INT >= 29;
 
         worker.execute(() -> {
             final long t0 = System.currentTimeMillis();
+            WifiOta wifiOta = null;
             try {
-                link.otaUpload(getContentResolver(), uri, size, md5, key, (sent, total) -> {
+                BleLink.Progress prog = (sent, total) -> {
                     final int pct = (int) (sent * 100 / total);
                     final long secs = Math.max(1, (System.currentTimeMillis() - t0) / 1000);
                     final long left = sent > 0 ? (total - sent) * secs / sent : 0;
@@ -178,7 +190,17 @@ public class OtaActivity extends Activity implements BleLink.Listener {
                         setStatus(sent >= total ? "Fichier envoyé, l'intercom vérifie le firmware…"
                                 : "Envoi : " + pct + " % (" + kb(sent) + " / " + kb(total) + ") — encore ~" + left + " s");
                     });
-                });
+                };
+                if (wifi) {
+                    ui.post(() -> setStatus("L'intercom ouvre son Wi-Fi…"));
+                    String[] cred = link.otaWifiStart(key);
+                    ui.post(() -> setStatus("Connexion au Wi-Fi « " + cred[0] + " »… accepte la demande d'Android."));
+                    wifiOta = new WifiOta(this);
+                    wifiOta.connect(cred[0], cred[1], 90000);
+                    wifiOta.upload(getContentResolver(), uri, size, md5, key, prog);
+                } else {
+                    link.otaUpload(getContentResolver(), uri, size, md5, key, prog);
+                }
                 final long secs = (System.currentTimeMillis() - t0) / 1000;
                 ui.post(() -> {
                     setStatus("✅ Mise à jour acceptée en " + secs + " s. L'intercom redémarre, l'app se reconnecte toute seule.");
@@ -191,6 +213,8 @@ public class OtaActivity extends Activity implements BleLink.Listener {
                     progress.setProgress(0);
                     done();
                 });
+            } finally {
+                if (wifiOta != null) wifiOta.close();
             }
         });
     }

@@ -148,6 +148,29 @@ final class BleLink {
         }
     }
 
+    /**
+     * Demande à l'intercom d'ouvrir son point d'accès Wi-Fi pour la mise à jour (bloquant).
+     * Renvoie {ssid, mot de passe}.
+     */
+    String[] otaWifiStart(String key) throws IOException, InterruptedException {
+        try {
+            return gattThread.submit(() -> {
+                requireConnected();
+                otaReplies.clear();
+                write(chOtaCtrl, ("WIFI " + key).getBytes(StandardCharsets.UTF_8));
+                String r = otaReplies.poll(10000, TimeUnit.MILLISECONDS);
+                if (r == null) throw new IOException("pas de réponse de l'intercom");
+                String[] p = r.split(" ");
+                if (!r.startsWith("WIFI ") || p.length < 3) throw new IOException(esp(r));
+                return new String[]{p[1], p[2]};
+            }).get();
+        } catch (ExecutionException e) {
+            Throwable c = e.getCause();
+            if (c instanceof IOException) throw (IOException) c;
+            throw new IOException(c != null ? c.getMessage() : "erreur inconnue");
+        }
+    }
+
     // ---------------------------------------------------------------- connexion
 
     private final Runnable reconnect = this::connect;
