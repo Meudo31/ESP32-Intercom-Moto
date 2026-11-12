@@ -4,13 +4,16 @@
 //  1. L'ESP32 apparaît comme une enceinte Bluetooth (« Intercom Moto ») sur le téléphone.
 //  2. La musique reçue (A2DP) est envoyée en numérique (I2S) à l'ampli MAX98357A,
 //     qui alimente les haut-parleurs du casque.
-//  3. En option (AVEC_BOUTONS à 1 dans config.h), trois boutons pilotent la lecture
-//     (AVRCP) et le volume. Sans boutons, tout se règle depuis le téléphone.
+//  3. Un bouton (A, GPIO32) : appui long de 2 s = veille profonde, un appui le réveille ;
+//     appui court = lecture / pause.
+//  4. En option (AVEC_BOUTONS à 1 dans config.h), deux boutons de plus pilotent le volume
+//     et les pistes. Sans eux, tout se règle depuis le téléphone.
 //
 // Carte conseillée : D1 mini ESP32 (WROOM-32). Toute carte ESP32 classique convient.
 //
-// Boutons (entre la broche et GND), seulement si AVEC_BOUTONS vaut 1 :
-//   A : court = lecture / pause
+// Boutons (entre la broche et GND) :
+//   A : court = lecture / pause, long (2 s) = veille profonde   (toujours présent)
+//   B et C seulement si AVEC_BOUTONS vaut 1 :
 //   B : court = volume +, long = piste suivante
 //   C : court = volume -, long = piste précédente
 //
@@ -20,13 +23,12 @@
 #include <Arduino.h>
 #include "BluetoothA2DPSink.h"
 #include "driver/i2s.h"
+#include "driver/rtc_io.h"
+#include "bouton.h"
 #include "config.h"
 
 #ifndef AVEC_BOUTONS
 #define AVEC_BOUTONS 0
-#endif
-#if AVEC_BOUTONS
-#include "bouton.h"
 #endif
 
 // ---------- Broches ----------
@@ -34,10 +36,12 @@
 #define BROCHE_I2S_LRC   25   // MAX98357A : LRC
 #define BROCHE_I2S_DOUT  22   // MAX98357A : DIN
 #define BROCHE_LED        2   // LED bleue de la carte : allumée quand le téléphone est connecté
+#define BROCHE_VEILLE    32   // bouton A : doit être une broche RTC pour réveiller l'ESP32
 #define PORT_HP          I2S_NUM_0
 
+Bouton boutonA(BROCHE_VEILLE, 2000);  // appui long de 2 s pour éviter une mise en veille par erreur
 #if AVEC_BOUTONS
-Bouton boutonA(32), boutonB(33), boutonC(27);
+Bouton boutonB(33), boutonC(27);
 #endif
 BluetoothA2DPSink a2dp;
 
@@ -105,13 +109,38 @@ void connexionChangee(esp_a2d_connection_state_t etat, void*) {
   Serial.println(connecte ? "Téléphone connecté" : "Téléphone déconnecté");
 }
 
+// ---------- Veille profonde ----------
+// L'ESP32 coupe presque tout (quelques µA). Un appui sur le bouton A le réveille :
+// il redémarre alors comme à la mise sous tension et se reconnecte au téléphone.
+void attendreRelachement() {
+  while (digitalRead(BROCHE_VEILLE) == LOW) delay(10);
+  delay(50);  // anti-rebond
+}
+
+void veilleProfonde() {
+  Serial.println("Veille profonde : appuie sur le bouton A pour réveiller");
+  digitalWrite(BROCHE_LED, LOW);
+  attendreRelachement();          // sinon le bouton encore enfoncé réveillerait aussitôt
+  a2dp.end();                     // déconnexion propre du téléphone
+  i2s_driver_uninstall(PORT_HP);
+  rtc_gpio_pullup_en((gpio_num_t)BROCHE_VEILLE);
+  rtc_gpio_pulldown_dis((gpio_num_t)BROCHE_VEILLE);
+  esp_sleep_enable_ext0_wakeup((gpio_num_t)BROCHE_VEILLE, 0);  // réveil quand la broche passe à GND
+  Serial.flush();
+  esp_deep_sleep_start();
+}
+
 // ---------- Programme principal ----------
 void setup() {
   Serial.begin(115200);
   Serial.println("\nIntercom moto - étape 1 : musique Bluetooth");
   pinMode(BROCHE_LED, OUTPUT);
-#if AVEC_BOUTONS
   boutonA.begin();
+  if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT0) {
+    Serial.println("Réveil par le bouton");
+    attendreRelachement();        // l'appui de réveil ne doit pas compter comme un appui long
+  }
+#if AVEC_BOUTONS
   boutonB.begin();
   boutonC.begin();
 #endif
@@ -127,7 +156,6 @@ void setup() {
 }
 
 void loop() {
-#if AVEC_BOUTONS
   switch (boutonA.lire()) {
     case Appui::COURT:
       if (a2dp.get_audio_state() == ESP_A2D_AUDIO_STATE_STARTED) {
@@ -138,8 +166,10 @@ void loop() {
         a2dp.play();
       }
       break;
+    case Appui::LONG: veilleProfonde(); break;
     default: break;
   }
+#if AVEC_BOUTONS
   switch (boutonB.lire()) {
     case Appui::COURT: appliquerVolume(volume + 10); break;
     case Appui::LONG:  Serial.println("Piste suivante"); a2dp.next(); break;
@@ -150,8 +180,6 @@ void loop() {
     case Appui::LONG:  Serial.println("Piste précédente"); a2dp.previous(); break;
     default: break;
   }
-  delay(5);
-#else
-  delay(100);  // rien à surveiller : la musique est gérée par la pile Bluetooth
 #endif
+  delay(5);
 }

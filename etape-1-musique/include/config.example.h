@@ -9,6 +9,7 @@
 // Sans boutons, le volume local est à 100 % et seul le téléphone règle le volume.
 #define VOLUME_DEPART 60
 
-// Boutons sur le casque : 0 = sans boutons (volume, lecture et pistes depuis le téléphone),
-// 1 = trois boutons sur GPIO32, 33 et 27 (voir README).
+// Le bouton A (GPIO32, veille profonde et lecture / pause) est toujours présent.
+// Boutons B et C : 0 = absents (volume et pistes depuis le téléphone),
+// 1 = deux boutons de plus sur GPIO33 et 27 (voir README).
 #define AVEC_BOUTONS 0
