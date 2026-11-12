@@ -12,15 +12,22 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          run-id: 43218071311
+          run-id: 43219681975
           name: etape-1-musique
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: out
+          path: out/fw
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 43219681975
+          name: app-android
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: out/apk
       - run: |
           mkdir -p binaires
-          mv out/firmware.bin binaires/v1-musique-d1-mini.bin
+          mv out/fw/firmware.bin binaires/v1-musique-d1-mini.bin
+          mv out/apk/app-debug.apk binaires/IntercomMoto.apk
           git config user.name github-actions
           git config user.email github-actions@users.noreply.github.com
           git add -f binaires
-          git commit -m "Binaires du build 43218071311" || true
+          git commit -m "Binaires du build 43219681975" || true
           git push
