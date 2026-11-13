@@ -181,7 +181,7 @@ static void traiter(const char *cle, const char *val) {
     else if (!strcmp(val, "raccrocher")) c.type = Cmd::RACCROCHER;
     else return;
   }
-  else if (!strcmp(cle, "gainmicro")) { c.type = Cmd::GAIN_MICRO; c.valeur = n; }
+  else if (!strcmp(cle, "gainmicro")) { c.type = Cmd::REGLER_MICRO; c.valeur = n; }
   else if (!strcmp(cle, "volappel")) { c.type = Cmd::VOLUME_APPEL_PLUS; c.valeur = n - appelVolume(); }
   else { Serial.printf("[App] Réglage inconnu : %s\n", cle); return; }
   commandeEnvoyer(c);

@@ -73,7 +73,7 @@ static void executer(const Commande &c) {
     case Cmd::REJETER:     appelRejeter(); break;
     case Cmd::RACCROCHER:  appelRaccrocher(); break;
     case Cmd::VOLUME_APPEL_PLUS: appelVolumePlus(c.valeur); break;
-    case Cmd::GAIN_MICRO:
+    case Cmd::REGLER_MICRO:
       voixSetGainMicro(constrain(c.valeur, 1, 32));
       reglagesSetGainMicro(voixGainMicro());
       Serial.printf("[Commande] Gain du micro : %u\n", voixGainMicro());
