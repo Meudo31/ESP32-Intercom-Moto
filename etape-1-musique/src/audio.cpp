@@ -140,7 +140,7 @@ void audioSetMode(ModeAudio mode, uint32_t frequence) {
 }
 
 void audioEcrireMono(const int16_t *ech, size_t n, int32_t gainQ15, ModeAudio mode) {
-  static int16_t tampon[2 * 128];   // utilisé par une seule source à la fois
+  int16_t tampon[2 * 128];
   if (!s_actif || s_mode != mode) return;
   int32_t g = (int32_t)(((int64_t)s_gainQ15 * gainQ15) >> 15);
   while (n > 0) {
