@@ -43,7 +43,7 @@
 #define BROCHE_BOUTON_A 15
 #endif
 #ifndef BROCHE_BOUTON_B
-#define BROCHE_BOUTON_B 33
+#define BROCHE_BOUTON_B 16
 #endif
 #ifndef BROCHE_BOUTON_C
 #define BROCHE_BOUTON_C 4
@@ -121,10 +121,10 @@
 #define VOLUME_APPEL_DEPART 10
 #endif
 #ifndef BROCHE_MICRO_SCK
-#define BROCHE_MICRO_SCK 18
+#define BROCHE_MICRO_SCK 25
 #endif
 #ifndef BROCHE_MICRO_WS
-#define BROCHE_MICRO_WS 19
+#define BROCHE_MICRO_WS 32
 #endif
 #ifndef BROCHE_MICRO_SD
 #define BROCHE_MICRO_SD 35
@@ -146,4 +146,7 @@
 #endif
 #ifndef VOIX_PILE
 #define VOIX_PILE 3072
+#endif
+#ifndef BROCHE_MICRO_LR
+#define BROCHE_MICRO_LR 33
 #endif

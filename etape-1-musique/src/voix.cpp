@@ -174,6 +174,12 @@ static void tacheMicro(void *) {
 // ---------- démarrage / arrêt ----------
 
 void voixInit() {
+#if AVEC_MICRO
+  if (BROCHE_MICRO_LR >= 0) {   // L/R à l'état bas : le micro parle sur la voie gauche
+    pinMode(BROCHE_MICRO_LR, OUTPUT);
+    digitalWrite(BROCHE_MICRO_LR, LOW);
+  }
+#endif
   s_versHp = xRingbufferCreate(4096, RINGBUF_TYPE_BYTEBUF);
   s_versTel = xRingbufferCreate(2048, RINGBUF_TYPE_BYTEBUF);
   voixSetVolume(VOLUME_APPEL_DEPART);

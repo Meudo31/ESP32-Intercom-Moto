@@ -21,9 +21,9 @@ Le code compile avec PlatformIO (ESP32-WROOM-32, framework Arduino, bibliothèqu
 | Bouton A | GPIO15 et GND |
 | Micro INMP441 **VDD** | **3V3** (surtout pas 5 V) |
 | Micro INMP441 **GND** | GND |
-| Micro INMP441 **L/R** | GND (le micro parle sur la voie gauche) |
-| Micro INMP441 **SCK** | GPIO18 |
-| Micro INMP441 **WS** | GPIO19 |
+| Micro INMP441 **L/R** | GPIO33 (mise à GND par le firmware : le micro parle sur la voie gauche) |
+| Micro INMP441 **SCK** | GPIO25 |
+| Micro INMP441 **WS** | GPIO32 |
 | Micro INMP441 **SD** | GPIO35 |
 
 Ce brochage convient à la DevKit V1 et à la D1 mini ESP32 ; la LED bleue de la carte est sur GPIO2. Si on appuie sur le bouton pendant la mise sous tension, l'ESP32 démarre normalement mais n'affiche pas ses premiers messages sur le port série (GPIO15 est une broche de démarrage) : sans conséquence.
@@ -52,7 +52,7 @@ L'intercom est aussi un kit mains libres (profil Bluetooth HFP) : quand le tél�
 
 Hors appel, le bouton garde ses gestes habituels (musique, volume, veille). La LED clignote vite pendant la sonnerie et reste allumée pendant l'appel.
 
-**Il faut un micro** pour que l'interlocuteur t'entende : le haut-parleur seul ne suffit pas. Le firmware attend un **INMP441** (micro numérique I2S, environ 3 €), câblé comme dans le tableau ci-dessus. Les broches 18, 19 et 35 ne jouent aucun rôle au démarrage de l'ESP32 et sont libres sur la DevKit V1 comme sur la D1 mini ESP32. Sans micro, mets `AVEC_MICRO` à 0 dans `config.h` : tu entendras l'appel, l'autre n'entendra que du silence. Si l'autre t'entend trop faiblement ou trop fort, règle `GAIN_MICRO` (1 à 32, 4 par défaut).
+**Il faut un micro** pour que l'interlocuteur t'entende : le haut-parleur seul ne suffit pas. Le firmware attend un **INMP441** (micro numérique I2S, environ 3 €), câblé comme dans le tableau ci-dessus. Les broches 25, 32, 33 et 35 ne jouent aucun rôle au démarrage de l'ESP32 et sont libres sur la DevKit V1 comme sur la D1 mini ESP32. On peut aussi relier L/R directement à GND et mettre `BROCHE_MICRO_LR` à -1. Sans micro, mets `AVEC_MICRO` à 0 dans `config.h` : tu entendras l'appel, l'autre n'entendra que du silence. Si l'autre t'entend trop faiblement ou trop fort, règle `GAIN_MICRO` (1 à 32, 4 par défaut).
 
 À savoir :
 - **Le téléphone doit voir les « appels »** : s'il avait été appairé avec une version plus ancienne, oublie « Intercom Moto » dans son Bluetooth puis appaire-le de nouveau, et vérifie que l'option « Appels téléphoniques » est cochée.
@@ -84,7 +84,7 @@ Pour enchaîner deux appuis, il faut moins de 0,4 s entre les deux ; c'est aussi
 
 ### Boutons B et C (option)
 
-Pour les ajouter, mets `AVEC_BOUTONS` à 1 dans `config.h` et câble B sur GPIO33 et GND, C sur GPIO4 et GND.
+Pour les ajouter, mets `AVEC_BOUTONS` à 1 dans `config.h` et câble B sur GPIO16 et GND, C sur GPIO4 et GND (GPIO33 sert au micro depuis la 2.0.1).
 
 | Bouton | Appui court | Appui long |
 | --- | --- | --- |
