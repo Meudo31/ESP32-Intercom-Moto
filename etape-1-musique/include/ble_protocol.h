@@ -15,7 +15,9 @@
 //  0  u8   version (1)
 //  1  u8   drapeaux : bit0 téléphone connecté (musique), bit1 lecture en cours,
 //                     bit2 télécommande AVRCP connectée, bit3 boutons B et C présents,
-//                     bit4 mise à jour en cours
+//                     bit4 mise à jour en cours,
+//                     bit5 appel entrant (ça sonne), bit6 appel en cours ou sortant,
+//                     bit7 téléphone connecté pour les appels (HFP)   — depuis le firmware 2.0.0
 //  2  u8   volume de l'intercom, 0 à 100 %
 //  3  u8   volume envoyé par le téléphone, 0 à 127
 //  4  u16  fréquence audio (Hz)
@@ -28,14 +30,20 @@
 // 27  u8   veille automatique (minutes, 0 = jamais)
 // 28  u32  compteur de changements de MEDIA : relire MEDIA quand il change
 // 32  u8   gain de l'ampli (dB : 6, 9 ou 12)   — depuis le firmware 1.5.0
+// 33  u8   appel : 0 aucun, 1 entrant (sonnerie), 2 sortant, 3 en cours   — depuis le firmware 2.1.0
+// 34  u8   volume de l'appel, 0 à 15
+// 35  u8   gain du micro, 1 à 32 (0 = pas de micro)
 #define DATA_VERSION 1
-#define DATA_TAILLE 33
+#define DATA_TAILLE 36
 
 #define DRAPEAU_TEL       0x01
 #define DRAPEAU_LECTURE   0x02
 #define DRAPEAU_AVRCP     0x04
 #define DRAPEAU_BOUTONS   0x08
 #define DRAPEAU_OTA       0x10
+#define DRAPEAU_SONNERIE  0x20
+#define DRAPEAU_APPEL     0x40
+#define DRAPEAU_HFP       0x80
 
 // Commandes (COMMAND), séparées par & :
 //   cmd=play | pause | basculer | suivant | precedent | stop
@@ -49,6 +57,10 @@
 //   deconnecter=1     déconnecte le téléphone
 //   reconnecter=1     se reconnecte au dernier téléphone
 //   oublier=1         oublie le dernier téléphone (il faudra le réappairer)
+//   appel=decrocher | rejeter | raccrocher
+//   volappel=0..15    volume de l'appel en cours
+//   gainmicro=1..32   amplification du micro, mémorisée
+// MEDIA contient aussi "appel" (état en texte) et "appel_numero" depuis le firmware 2.0.0.
 
 // Mise à jour par Wi-Fi : OTA_CTRL « WIFI <clé> » -> notification « WIFI <ssid> <mot de passe> ».
 // Le téléphone rejoint ce Wi-Fi puis envoie POST http://192.168.4.1/update?key=<clé>&md5=<md5>

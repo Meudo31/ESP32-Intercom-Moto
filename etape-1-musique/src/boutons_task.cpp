@@ -1,6 +1,7 @@
 #include "boutons_task.h"
 
 #include <Arduino.h>
+#include "appel.h"
 #include "bouton.h"
 #include "commandes.h"
 #include "geste.h"
@@ -15,7 +16,29 @@ static void tacheBoutons(void *) {
   c.begin();
 #endif
   for (;;) {
-    switch (a.lire()) {
+    Geste g = a.lire();
+    // Pendant un appel, le bouton A sert au téléphone ; sinon, à la musique.
+    EtatAppel appel = g == Geste::AUCUN ? EtatAppel::AUCUN : appelEtat();
+    if (appel == EtatAppel::SONNERIE) {
+      switch (g) {
+        case Geste::COURT:     commandeEnvoyer(Cmd::DECROCHER); break;
+        case Geste::DOUBLE:    commandeEnvoyer(Cmd::REJETER); break;
+        case Geste::TRES_LONG: commandeEnvoyer(Cmd::VEILLE); break;
+        default: break;   // les autres gestes ne font rien pendant la sonnerie
+      }
+      g = Geste::AUCUN;
+    } else if (appel == EtatAppel::EN_COURS || appel == EtatAppel::SORTANT) {
+      switch (g) {
+        case Geste::COURT:      commandeEnvoyer(Cmd::RACCROCHER); break;
+        case Geste::LONG:       commandeEnvoyer(Cmd::VOLUME_APPEL_PLUS, 1); break;
+        case Geste::LONG_LONG:  commandeEnvoyer(Cmd::VOLUME_APPEL_PLUS, 2); break;
+        case Geste::LONG_COURT: commandeEnvoyer(Cmd::VOLUME_APPEL_PLUS, -1); break;
+        case Geste::TRES_LONG:  commandeEnvoyer(Cmd::VEILLE); break;
+        default: break;
+      }
+      g = Geste::AUCUN;
+    }
+    switch (g) {
       case Geste::COURT:      commandeEnvoyer(Cmd::BASCULER); break;
       case Geste::DOUBLE:     commandeEnvoyer(Cmd::SUIVANT); break;
       case Geste::COURT_LONG: commandeEnvoyer(Cmd::PRECEDENT); break;

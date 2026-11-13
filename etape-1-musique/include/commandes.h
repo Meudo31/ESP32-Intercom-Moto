@@ -14,6 +14,9 @@ enum class Cmd : uint8_t {
   REDEMARRER,
   NOM,            // texte
   DECONNECTER, RECONNECTER, OUBLIER,
+  DECROCHER, REJETER, RACCROCHER,
+  VOLUME_APPEL_PLUS,  // valeur : pas (sur 15)
+  REGLER_MICRO,       // valeur : gain du micro, 1 à 32
 };
 
 struct Commande {

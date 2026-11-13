@@ -23,6 +23,14 @@ public class MainActivity extends Activity implements BleLink.Listener {
 
     private BleLink link;
     private TextView connState, phone, title, artist, positionText, volLabel, volPhoneLabel, live, info;
+    private TextView callState, callNumber, callVolLabel, micGainLabel;
+    private Button btnAnswer, btnReject, btnHangup;
+    private SeekBar callVolume, micGain;
+    private boolean draggingCallVolume, draggingMicGain;
+    private int lastCallState = -1;
+    private long callEndedAt = 0;   // pour afficher « Appel terminé » quelques secondes
+    private long callStartedAt = 0;
+    private String callNumberText = "";
     private ProgressBar position;
     private SeekBar volume, volumePhone;
     private EditText name, autoSleep;
@@ -70,6 +78,7 @@ public class MainActivity extends Activity implements BleLink.Listener {
         commandViews.add(findViewById(R.id.gain9));
         commandViews.add(findViewById(R.id.gain12));
 
+        setupCall();
         btnConnect.setOnClickListener(v -> startConnection());
         command(R.id.btnPrev, "cmd=precedent");
         command(R.id.btnPlay, "cmd=basculer");
@@ -215,7 +224,10 @@ public class MainActivity extends Activity implements BleLink.Listener {
                 + "\nMémoire libre : " + OtaActivity.kb(d.freeHeap) + " (minimum " + OtaActivity.kb(d.minFreeHeap) + ")"
                 + "\nAudio reçu : " + String.format(Locale.FRANCE, "%.1f Mo", d.audioBytes / 1048576.0)
                 + "\nBoutons B et C : " + (d.has(BleProtocol.FLAG_BUTTONS) ? "oui" : "non")
+                + "\nTéléphone connecté pour les appels : " + (d.has(BleProtocol.FLAG_HFP) ? "oui" : "non")
                 + (d.has(BleProtocol.FLAG_OTA) ? "\nMise à jour en cours…" : ""));
+
+        showCall(d);
 
         if (d.mediaCounter != lastMediaCounter) {
             lastMediaCounter = d.mediaCounter;
@@ -242,7 +254,100 @@ public class MainActivity extends Activity implements BleLink.Listener {
         if (piste > 0) appendSep(sb, "piste " + piste + (nb > 0 ? "/" + nb : ""));
         artist.setText(sb.toString());
         durationMs = m.optLong("duree_ms", 0);
+        callNumberText = m.optString("appel_numero", "");
+        if (last != null) showCall(last);
     }
+
+    // ---------------------------------------------------------------- appel
+
+    private void setupCall() {
+        callState = findViewById(R.id.callState);
+        callNumber = findViewById(R.id.callNumber);
+        callVolLabel = findViewById(R.id.callVolLabel);
+        micGainLabel = findViewById(R.id.micGainLabel);
+        btnAnswer = findViewById(R.id.btnAnswer);
+        btnReject = findViewById(R.id.btnReject);
+        btnHangup = findViewById(R.id.btnHangup);
+        callVolume = findViewById(R.id.callVolume);
+        micGain = findViewById(R.id.micGain);
+        btnAnswer.setOnClickListener(v -> send("appel=decrocher", null));
+        btnReject.setOnClickListener(v -> send("appel=rejeter", null));
+        btnHangup.setOnClickListener(v -> send("appel=raccrocher", null));
+        callVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar s, int p, boolean user) { if (user) callVolLabel.setText(callVolText(p)); }
+            @Override public void onStartTrackingTouch(SeekBar s) { draggingCallVolume = true; }
+            @Override public void onStopTrackingTouch(SeekBar s) {
+                draggingCallVolume = false;
+                send("volappel=" + s.getProgress(), null);
+            }
+        });
+        micGain.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar s, int p, boolean user) { if (user) micGainLabel.setText(micGainText(p + 1)); }
+            @Override public void onStartTrackingTouch(SeekBar s) { draggingMicGain = true; }
+            @Override public void onStopTrackingTouch(SeekBar s) {
+                draggingMicGain = false;
+                send("gainmicro=" + (s.getProgress() + 1), "Gain du micro : " + (s.getProgress() + 1));
+            }
+        });
+        commandViews.add(callVolume);
+        commandViews.add(micGain);
+        showCallButtons(-1);
+    }
+
+    private void showCall(BleProtocol.Data d) {
+        if (d.callState < 0) {   // firmware plus ancien que 2.1.0
+            callState.setText(d.has(BleProtocol.FLAG_RINGING) ? "📞 Appel entrant"
+                    : d.has(BleProtocol.FLAG_CALL) ? "📞 Appel en cours"
+                    : "Mets à jour le firmware (2.1.0) pour piloter les appels depuis l'app.");
+            callNumber.setText("");
+            showCallButtons(-1);
+            return;
+        }
+        long now = SystemClock.elapsedRealtime();
+        int s = d.callState;
+        if (s == BleProtocol.CALL_ACTIVE && lastCallState != BleProtocol.CALL_ACTIVE) callStartedAt = now;
+        if (s == BleProtocol.CALL_NONE && lastCallState > BleProtocol.CALL_NONE) callEndedAt = now;
+        lastCallState = s;
+
+        String text;
+        switch (s) {
+            case BleProtocol.CALL_INCOMING: text = "📞 Appel entrant…"; break;
+            case BleProtocol.CALL_OUTGOING: text = "📞 Appel sortant, ça sonne…"; break;
+            case BleProtocol.CALL_ACTIVE: text = "📞 En communication · " + time(now - callStartedAt); break;
+            default:
+                if (callEndedAt > 0 && now - callEndedAt < 5000) text = "Appel terminé";
+                else text = d.has(BleProtocol.FLAG_HFP) ? "Pas d'appel · prêt pour les appels"
+                        : "Le téléphone n'est pas connecté pour les appels";
+        }
+        callState.setText(text);
+        callNumber.setText(s == BleProtocol.CALL_NONE || callNumberText.isEmpty() ? "" : callNumberText);
+        showCallButtons(s);
+
+        if (!draggingCallVolume) {
+            callVolume.setProgress(d.callVolume);
+            callVolLabel.setText(callVolText(d.callVolume));
+        }
+        if (d.micGain == 0) {
+            micGain.setEnabled(false);
+            micGainLabel.setText("Micro : absent (AVEC_MICRO = 0 dans config.h)");
+        } else if (!draggingMicGain) {
+            micGain.setProgress(d.micGain - 1);
+            micGainLabel.setText(micGainText(d.micGain));
+        }
+    }
+
+    private void showCallButtons(int s) {
+        boolean connected = link.state() == BleLink.CONNECTED;
+        btnAnswer.setEnabled(connected && s == BleProtocol.CALL_INCOMING);
+        btnReject.setEnabled(connected && s == BleProtocol.CALL_INCOMING);
+        btnHangup.setEnabled(connected && (s == BleProtocol.CALL_ACTIVE || s == BleProtocol.CALL_OUTGOING));
+    }
+
+    private static String callVolText(int v) {
+        return "Volume de l'appel : " + (v < 0 ? "—" : Math.round(v * 100 / 15.0) + " %");
+    }
+
+    private static String micGainText(int g) { return "Gain du micro : " + (g <= 0 ? "—" : "× " + g); }
 
     private void refreshPhone() {
         Object state = phone.getTag();
@@ -275,6 +380,16 @@ public class MainActivity extends Activity implements BleLink.Listener {
         volPhoneLabel.setText(phoneVolText(-1));
         live.setText("");
         info.setText("");
+        if (callState != null) {
+            callState.setText("—");
+            callNumber.setText("");
+            callVolLabel.setText(callVolText(-1));
+            micGainLabel.setText(micGainText(-1));
+            callNumberText = "";
+            lastCallState = -1;
+            callEndedAt = 0;
+            showCallButtons(-1);
+        }
         rateBytes = -1;
         rateKbps = 0;
         durationMs = 0;

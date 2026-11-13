@@ -3,11 +3,13 @@
 #include <Arduino.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
+#include "appel.h"
 #include "audio.h"
 #include "musique_bt.h"
 #include "parametres.h"
 #include "reglages.h"
 #include "veille.h"
+#include "voix.h"
 
 static QueueHandle_t s_file = nullptr;
 
@@ -64,9 +66,18 @@ static void executer(const Commande &c) {
         ESP.restart();
       }
       break;
-    case Cmd::DECONNECTER: musiqueDeconnecter(); break;
-    case Cmd::RECONNECTER: musiqueReconnecter(); break;
-    case Cmd::OUBLIER:     musiqueOublier(); break;
+    case Cmd::DECONNECTER: appelDeconnecter(); musiqueDeconnecter(); break;
+    case Cmd::RECONNECTER: appelReconnexionAuto(); musiqueReconnecter(); break;
+    case Cmd::OUBLIER:     appelDeconnecter(); musiqueOublier(); break;
+    case Cmd::DECROCHER:   appelDecrocher(); break;
+    case Cmd::REJETER:     appelRejeter(); break;
+    case Cmd::RACCROCHER:  appelRaccrocher(); break;
+    case Cmd::VOLUME_APPEL_PLUS: appelVolumePlus(c.valeur); break;
+    case Cmd::REGLER_MICRO:
+      voixSetGainMicro(constrain(c.valeur, 1, 32));
+      reglagesSetGainMicro(voixGainMicro());
+      Serial.printf("[Commande] Gain du micro : %u\n", voixGainMicro());
+      break;
   }
 }
 

@@ -37,16 +37,16 @@
 #define GAIN_DEPART 9
 #endif
 #ifndef BROCHE_LED
-#define BROCHE_LED 2
+#define BROCHE_LED -1
 #endif
 #ifndef BROCHE_BOUTON_A
-#define BROCHE_BOUTON_A 15
+#define BROCHE_BOUTON_A 4
 #endif
 #ifndef BROCHE_BOUTON_B
-#define BROCHE_BOUTON_B 33
+#define BROCHE_BOUTON_B 16
 #endif
 #ifndef BROCHE_BOUTON_C
-#define BROCHE_BOUTON_C 4
+#define BROCHE_BOUTON_C 17
 #endif
 #ifndef COMMANDES_PRIO
 #define COMMANDES_PRIO 3
@@ -101,4 +101,55 @@
 #endif
 #ifndef WIFI_OTA_PILE
 #define WIFI_OTA_PILE 6144
+#endif
+#ifndef AVEC_MICRO
+#define AVEC_MICRO 1
+#endif
+#ifndef GAIN_MICRO
+#define GAIN_MICRO 4
+#endif
+#ifndef MICRO_CANAL
+#define MICRO_CANAL -1
+#endif
+#ifndef SONNERIE_VOLUME
+#define SONNERIE_VOLUME 80
+#endif
+#ifndef SONNERIE_PAUSE_MS
+#define SONNERIE_PAUSE_MS 1500
+#endif
+#ifndef VOLUME_APPEL_DEPART
+#define VOLUME_APPEL_DEPART 10
+#endif
+#ifndef BROCHE_MICRO_SCK
+#define BROCHE_MICRO_SCK 25
+#endif
+#ifndef BROCHE_MICRO_WS
+#define BROCHE_MICRO_WS 32
+#endif
+#ifndef BROCHE_MICRO_SD
+#define BROCHE_MICRO_SD 35
+#endif
+#ifndef APPEL_PRIO
+#define APPEL_PRIO 3
+#endif
+#ifndef APPEL_PILE
+#define APPEL_PILE 4096
+#endif
+#ifndef SONNERIE_PRIO
+#define SONNERIE_PRIO 4
+#endif
+#ifndef SONNERIE_PILE
+#define SONNERIE_PILE 3072
+#endif
+#ifndef VOIX_PRIO
+#define VOIX_PRIO 5
+#endif
+#ifndef VOIX_PILE
+#define VOIX_PILE 3072
+#endif
+#ifndef BROCHE_MICRO_LR
+#define BROCHE_MICRO_LR 33
+#endif
+#ifndef BROCHE_BOUTON_A_MASSE
+#define BROCHE_BOUTON_A_MASSE 2
 #endif
