@@ -18,11 +18,16 @@ final class BleProtocol {
     static final UUID CCCD = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
     static final int FLAG_TEL = 0x01, FLAG_PLAYING = 0x02, FLAG_AVRCP = 0x04, FLAG_BUTTONS = 0x08, FLAG_OTA = 0x10;
+    // Depuis le firmware 2.0.0 : appels (profil mains libres HFP)
+    static final int FLAG_RINGING = 0x20, FLAG_CALL = 0x40, FLAG_HFP = 0x80;
+    // État de l'appel (octet 33, firmware 2.1.0)
+    static final int CALL_NONE = 0, CALL_INCOMING = 1, CALL_OUTGOING = 2, CALL_ACTIVE = 3;
 
     /** Paquet DATA version 1 (32 octets, little-endian). */
     static final class Data {
         int version, flags, volume, phoneVolume, sampleRate, rssi, autoSleepMin;
         int gainDb = -1;   // -1 : firmware plus ancien que 1.5.0
+        int callState = -1, callVolume = -1, micGain = -1;   // -1 : firmware plus ancien que 2.1.0
         long uptimeS, freeHeap, minFreeHeap, audioBytes, positionMs, mediaCounter;
 
         boolean has(int flag) { return (flags & flag) != 0; }
@@ -44,6 +49,11 @@ final class BleProtocol {
             d.autoSleepMin = u8(p, 27);
             d.mediaCounter = u32(p, 28);
             if (p.length >= 33) d.gainDb = u8(p, 32);
+            if (p.length >= 36) {
+                d.callState = u8(p, 33);
+                d.callVolume = u8(p, 34);
+                d.micGain = u8(p, 35);
+            }
             return d;
         }
     }

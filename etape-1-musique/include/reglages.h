@@ -11,3 +11,5 @@ uint8_t reglagesVeilleAuto();
 void reglagesSetVeilleAuto(uint8_t minutes);
 uint8_t reglagesGain();
 void reglagesSetGain(uint8_t db);
+uint8_t reglagesGainMicro();
+void reglagesSetGainMicro(uint8_t g);

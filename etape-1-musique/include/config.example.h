@@ -36,7 +36,7 @@
 //   en appel : court = raccrocher, long = volume +, long + court = volume -
 // Micro I2S INMP441 : 1 = câblé (voir README), 0 = absent (l'interlocuteur n'entend rien)
 #define AVEC_MICRO 1
-#define GAIN_MICRO 4            // amplification du micro, de 1 à 32
+#define GAIN_MICRO 4            // amplification du micro au départ, de 1 à 32 (ensuite réglable dans l'app)
 #define MICRO_CANAL -1          // -1 = détection automatique, 0 ou 1 pour forcer
 #define SONNERIE_VOLUME 80      // volume de la sonnerie, en % du volume de l'intercom
 #define SONNERIE_PAUSE_MS 1500  // silence entre deux sonneries

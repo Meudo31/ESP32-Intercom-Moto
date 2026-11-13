@@ -9,6 +9,8 @@ void voixArreter();                     // liaison audio fermée
 bool voixActive();
 uint32_t voixFrequence();
 void voixSetVolume(uint8_t v);          // volume de l'appel, 0 à 15 (échelle HFP)
+void voixSetGainMicro(uint8_t g);       // amplification du micro, 1 à 32
+uint8_t voixGainMicro();
 
 // Fonctions données à la pile Bluetooth (esp_hf_client_register_data_callback)
 void voixRecu(const uint8_t *donnees, uint32_t taille);

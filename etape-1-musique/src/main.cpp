@@ -40,6 +40,7 @@
 #include "reglages.h"
 #include "system_events.h"
 #include "veille.h"
+#include "voix.h"
 
 void setup() {
   Serial.begin(115200);
@@ -54,6 +55,7 @@ void setup() {
   ampliSetGain(reglagesGain());
   musiqueDemarrer(reglagesNom());
   appelDemarrer();   // appels : profil mains libres, sonnerie, micro
+  voixSetGainMicro(reglagesGainMicro());
 
   commandesDemarrer();
   boutonsDemarrer();

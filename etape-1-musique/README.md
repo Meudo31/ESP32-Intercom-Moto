@@ -58,6 +58,7 @@ Hors appel, le bouton garde ses gestes habituels (musique, volume, veille). Si u
 - **Le téléphone doit voir les « appels »** : s'il avait été appairé avec une version plus ancienne, oublie « Intercom Moto » dans son Bluetooth puis appaire-le de nouveau, et vérifie que l'option « Appels téléphoniques » est cochée.
 - Le son des appels est en qualité téléphone (8 kHz). Il n'y a pas d'annulation d'écho : garde le micro près de la bouche et loin des haut-parleurs (devant la mentonnière, par exemple), sinon l'interlocuteur peut s'entendre en écho.
 - Le volume de l'appel se règle aussi avec les touches de volume du téléphone pendant l'appel.
+- L'app Android (1.3.0 et plus) affiche l'appel (entrant, en cours avec sa durée, terminé) et le numéro, avec les boutons décrocher, rejeter et raccrocher, le volume de l'appel et le gain du micro (mémorisé).
 
 ### Changer la sonnerie
 

@@ -30,8 +30,11 @@
 // 27  u8   veille automatique (minutes, 0 = jamais)
 // 28  u32  compteur de changements de MEDIA : relire MEDIA quand il change
 // 32  u8   gain de l'ampli (dB : 6, 9 ou 12)   — depuis le firmware 1.5.0
+// 33  u8   appel : 0 aucun, 1 entrant (sonnerie), 2 sortant, 3 en cours   — depuis le firmware 2.1.0
+// 34  u8   volume de l'appel, 0 à 15
+// 35  u8   gain du micro, 1 à 32 (0 = pas de micro)
 #define DATA_VERSION 1
-#define DATA_TAILLE 33
+#define DATA_TAILLE 36
 
 #define DRAPEAU_TEL       0x01
 #define DRAPEAU_LECTURE   0x02
@@ -56,6 +59,7 @@
 //   oublier=1         oublie le dernier téléphone (il faudra le réappairer)
 //   appel=decrocher | rejeter | raccrocher
 //   volappel=0..15    volume de l'appel en cours
+//   gainmicro=1..32   amplification du micro, mémorisée
 // MEDIA contient aussi "appel" (état en texte) et "appel_numero" depuis le firmware 2.0.0.
 
 // Mise à jour par Wi-Fi : OTA_CTRL « WIFI <clé> » -> notification « WIFI <ssid> <mot de passe> ».

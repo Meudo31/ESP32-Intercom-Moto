@@ -18,9 +18,12 @@ static RingbufHandle_t s_versTel = nullptr;    // micro -> téléphone
 static volatile bool s_active = false;
 static volatile uint32_t s_frequence = 8000;
 static volatile int32_t s_gainQ15 = 32768;
+static volatile uint8_t s_gainMicro = GAIN_MICRO;
 static TaskHandle_t s_tacheHp = nullptr, s_tacheMicro = nullptr;
 
 bool voixActive() { return s_active; }
+void voixSetGainMicro(uint8_t g) { s_gainMicro = g < 1 ? 1 : (g > 32 ? 32 : g); }
+uint8_t voixGainMicro() { return s_gainMicro; }
 uint32_t voixFrequence() { return s_frequence; }
 
 void voixSetVolume(uint8_t v) {
@@ -153,7 +156,7 @@ static void tacheMicro(void *) {
     int c = canal < 0 ? 0 : canal;
     size_t n = 0;
     for (size_t i = 0; i < trames; i++) {
-      int32_t x = (brut[2 * i + c] >> 14) * GAIN_MICRO / 4;   // 18 bits utiles -> 16 bits environ
+      int32_t x = (brut[2 * i + c] >> 14) * s_gainMicro / 4;   // 18 bits utiles -> 16 bits environ
       int32_t y = x - dcEntree + dcSortie - (dcSortie >> 8);
       dcEntree = x;
       dcSortie = y;

@@ -15,6 +15,7 @@
 #include "parametres.h"
 #include "reglages.h"
 #include "system_events.h"
+#include "voix.h"
 
 // ---------- paquet DATA ----------
 
@@ -57,6 +58,9 @@ size_t appDataBuild(uint8_t *out, size_t max) {
   out[27] = reglagesVeilleAuto();
   put32(out + 28, m.compteur);
   out[32] = ampliGain();
+  out[33] = (uint8_t)appelEtat();
+  out[34] = appelVolume();
+  out[35] = AVEC_MICRO ? voixGainMicro() : 0;
   return DATA_TAILLE;
 }
 
@@ -177,6 +181,7 @@ static void traiter(const char *cle, const char *val) {
     else if (!strcmp(val, "raccrocher")) c.type = Cmd::RACCROCHER;
     else return;
   }
+  else if (!strcmp(cle, "gainmicro")) { c.type = Cmd::GAIN_MICRO; c.valeur = n; }
   else if (!strcmp(cle, "volappel")) { c.type = Cmd::VOLUME_APPEL_PLUS; c.valeur = n - appelVolume(); }
   else { Serial.printf("[App] Réglage inconnu : %s\n", cle); return; }
   commandeEnvoyer(c);

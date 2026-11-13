@@ -5,6 +5,7 @@
 #include <freertos/task.h>
 #include "esp_hf_client_api.h"
 #include "audio.h"
+#include "etat.h"
 #include "musique_bt.h"
 #include "parametres.h"
 #include "sonnerie.h"
@@ -100,13 +101,19 @@ static EtatAppel calculerEtat() {
 static void tacheAppel(void *) {
   uint32_t telSansMainsLibres = 0;   // depuis quand le téléphone est connecté sans HFP
   uint8_t tentatives = 0;
+  static char dernierNumero[sizeof s_numero] = "";
   for (;;) {
     ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(1000));
 
     EtatAppel e = calculerEtat();
-    if (e != s_etat) {
+    char numero[sizeof s_numero];
+    appelNumero(numero, sizeof numero);
+    if (e != s_etat || strcmp(numero, dernierNumero)) {
       s_etat = e;
-      Serial.printf("[Appel] %s\n", appelEtatTexte());
+      strlcpy(dernierNumero, numero, sizeof dernierNumero);
+      Serial.printf("[Appel] %s %s\n", appelEtatTexte(), numero);
+      EtatVerrou v;
+      g_etat.compteur++;   // l'app relit MEDIA (état et numéro de l'appel)
     }
 
     // Une seule source pour l'ampli : la sonnerie tant que l'appel entrant n'est ni décroché
