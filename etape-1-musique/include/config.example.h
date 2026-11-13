@@ -17,7 +17,7 @@
 #define GESTE_TRES_LONG_MS 3000    // durée de l'appui « très long » (veille)
 #define GESTE_ATTENTE_MS    400    // délai pour enchaîner un second appui
 #define PAS_VOLUME_BOUTON    10    // pas de volume du téléphone, sur 127 (10 = environ 8 %)
-// Boutons B et C : 0 = absents, 1 = sur GPIO16 et 4 (volume et pistes).
+// Boutons B et C : 0 = absents, 1 = sur GPIO16 et 17 (volume et pistes).
 #define AVEC_BOUTONS 0
 // Veille automatique après N minutes sans téléphone ni app connectés, 0 = jamais
 // (valeur de départ, modifiable depuis l'app).
@@ -49,10 +49,11 @@
 #define BROCHE_AMPLI_SD  13   // MAX98357A : SD (coupe l'ampli en veille), -1 si non câblée
 #define BROCHE_AMPLI_GAIN 12  // MAX98357A : GAIN (6, 9 ou 12 dB), -1 si non câblée
                               // GPIO12 = broche de démarrage : voir README (« Gain sur GPIO12 »)
-#define BROCHE_LED        2   // LED bleue de la carte
-#define BROCHE_BOUTON_A  15   // doit être une broche RTC (réveil de la veille profonde)
-#define BROCHE_BOUTON_B  16   // (GPIO33 sert maintenant au micro)
-#define BROCHE_BOUTON_C   4
+#define BROCHE_LED       -1   // LED bleue de la carte (GPIO2), -1 : GPIO2 sert de masse au bouton
+#define BROCHE_BOUTON_A   4   // doit être une broche RTC (réveil de la veille profonde)
+#define BROCHE_BOUTON_A_MASSE 2  // broche mise à GND par le firmware (autre patte du bouton), -1 si le bouton va à GND
+#define BROCHE_BOUTON_B  16
+#define BROCHE_BOUTON_C  17
 #define BROCHE_MICRO_SCK 25   // INMP441 : SCK
 #define BROCHE_MICRO_WS  32   // INMP441 : WS
 #define BROCHE_MICRO_SD  35   // INMP441 : SD (GPIO35 = entrée seulement, idéal ici)

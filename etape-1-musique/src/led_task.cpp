@@ -5,6 +5,7 @@
 #include "system_events.h"
 
 static void tacheLed(void *) {
+  if (BROCHE_LED < 0) vTaskDelete(nullptr);   // pas de LED (GPIO2 sert de masse au bouton)
   pinMode(BROCHE_LED, OUTPUT);
   uint32_t n = 0;
   for (;;) {

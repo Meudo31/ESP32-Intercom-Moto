@@ -14,8 +14,19 @@ static void attendreRelachement() {
   delay(50);  // anti-rebond
 }
 
+// Masse du bouton A sur une broche : à l'état bas, y compris pendant la veille profonde
+// (sinon le bouton ne pourrait pas réveiller l'ESP32).
+static void masseBouton() {
+  if (BROCHE_BOUTON_A_MASSE < 0) return;
+  gpio_hold_dis((gpio_num_t)BROCHE_BOUTON_A_MASSE);   // maintien posé avant la veille
+  pinMode(BROCHE_BOUTON_A_MASSE, OUTPUT);
+  digitalWrite(BROCHE_BOUTON_A_MASSE, LOW);
+}
+
 void veilleAuReveil() {
+  masseBouton();
   pinMode(BROCHE_BOUTON_A, INPUT_PULLUP);
+  delay(5);   // le temps que la broche du bouton se stabilise
   if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT0) {
     Serial.println("[Veille] Réveil par le bouton");
     attendreRelachement();        // l'appui de réveil ne doit pas compter comme un appui long
@@ -24,12 +35,17 @@ void veilleAuReveil() {
 
 void veilleProfonde() {
   Serial.println("[Veille] Veille profonde : appuie sur le bouton A pour réveiller");
-  digitalWrite(BROCHE_LED, LOW);
+  if (BROCHE_LED >= 0) digitalWrite(BROCHE_LED, LOW);
   attendreRelachement();          // sinon le bouton encore enfoncé réveillerait aussitôt
   delay(300);                     // laisse partir la réponse à l'app
   musiqueArreter();               // déconnexion propre du téléphone
   audioArreter();
   ampliCouperPourVeille();         // l'ampli ne consomme plus rien
+  if (BROCHE_BOUTON_A_MASSE >= 0) {
+    digitalWrite(BROCHE_BOUTON_A_MASSE, LOW);
+    gpio_hold_en((gpio_num_t)BROCHE_BOUTON_A_MASSE);   // reste à GND pendant la veille
+    gpio_deep_sleep_hold_en();
+  }
   rtc_gpio_pullup_en((gpio_num_t)BROCHE_BOUTON_A);
   rtc_gpio_pulldown_dis((gpio_num_t)BROCHE_BOUTON_A);
   esp_sleep_enable_ext0_wakeup((gpio_num_t)BROCHE_BOUTON_A, 0);  // réveil quand la broche passe à GND

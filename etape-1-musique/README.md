@@ -18,7 +18,7 @@ Le code compile avec PlatformIO (ESP32-WROOM-32, framework Arduino, bibliothèqu
 | MAX98357A **SD** | GPIO13 (le firmware coupe l'ampli pendant la veille profonde) |
 | MAX98357A **GAIN** | GPIO12 : gain réglable depuis l'app (6, 9 ou 12 dB). Attention, voir « Gain sur GPIO12 » ci-dessous |
 | MAX98357A sorties **+** et **−** | les deux haut-parleurs **en parallèle** (+ avec +, − avec −) |
-| Bouton A | GPIO15 et GND |
+| Bouton A | GPIO4 et GPIO2 (le firmware met GPIO2 à GND et l'y maintient pendant la veille) |
 | Micro INMP441 **VDD** | **3V3** (surtout pas 5 V) |
 | Micro INMP441 **GND** | GND |
 | Micro INMP441 **L/R** | GPIO33 (mise à GND par le firmware : le micro parle sur la voie gauche) |
@@ -26,7 +26,7 @@ Le code compile avec PlatformIO (ESP32-WROOM-32, framework Arduino, bibliothèqu
 | Micro INMP441 **WS** | GPIO32 |
 | Micro INMP441 **SD** | GPIO35 |
 
-Ce brochage convient à la DevKit V1 et à la D1 mini ESP32 ; la LED bleue de la carte est sur GPIO2. Si on appuie sur le bouton pendant la mise sous tension, l'ESP32 démarre normalement mais n'affiche pas ses premiers messages sur le port série (GPIO15 est une broche de démarrage) : sans conséquence.
+Ce brochage convient à la DevKit V1 et à la D1 mini ESP32. GPIO2 servant de masse au bouton, la LED bleue de la carte (sur GPIO2) n'indique plus l'état : elle reste éteinte (`BROCHE_LED` à -1). Pour relier le bouton directement à GND, mets `BROCHE_BOUTON_A_MASSE` à -1. GPIO2 est une broche de démarrage, mais le firmware ne la met à GND qu'une fois démarré : le flash par USB n'est pas gêné.
 
 Deux haut-parleurs 8 Ω en parallèle font 4 Ω, ce que le MAX98357A accepte. Pendant les essais, la carte est alimentée par son port USB.
 
@@ -50,7 +50,7 @@ L'intercom est aussi un kit mains libres (profil Bluetooth HFP) : quand le tél�
 | En appel | Appui court | Raccrocher |
 | En appel | Appui long / long puis court | Volume de l'appel + / − |
 
-Hors appel, le bouton garde ses gestes habituels (musique, volume, veille). La LED clignote vite pendant la sonnerie et reste allumée pendant l'appel.
+Hors appel, le bouton garde ses gestes habituels (musique, volume, veille). Si une LED est configurée (`BROCHE_LED`), elle clignote vite pendant la sonnerie et reste allumée pendant l'appel.
 
 **Il faut un micro** pour que l'interlocuteur t'entende : le haut-parleur seul ne suffit pas. Le firmware attend un **INMP441** (micro numérique I2S, environ 3 €), câblé comme dans le tableau ci-dessus. Les broches 25, 32, 33 et 35 ne jouent aucun rôle au démarrage de l'ESP32 et sont libres sur la DevKit V1 comme sur la D1 mini ESP32. On peut aussi relier L/R directement à GND et mettre `BROCHE_MICRO_LR` à -1. Sans micro, mets `AVEC_MICRO` à 0 dans `config.h` : tu entendras l'appel, l'autre n'entendra que du silence. Si l'autre t'entend trop faiblement ou trop fort, règle `GAIN_MICRO` (1 à 32, 4 par défaut).
 
@@ -69,7 +69,7 @@ Le noyau Arduino précompilé pour l'ESP32 envoie la voix des appels sur des bro
 
 ## Le bouton A
 
-Un seul bouton (entre GPIO15 et GND) fait tout. Hors appel :
+Un seul bouton (entre GPIO4 et GPIO2) fait tout. Hors appel :
 
 | Geste | Action |
 | --- | --- |
@@ -84,7 +84,7 @@ Pour enchaîner deux appuis, il faut moins de 0,4 s entre les deux ; c'est aussi
 
 ### Boutons B et C (option)
 
-Pour les ajouter, mets `AVEC_BOUTONS` à 1 dans `config.h` et câble B sur GPIO16 et GND, C sur GPIO4 et GND (GPIO33 sert au micro depuis la 2.0.1).
+Pour les ajouter, mets `AVEC_BOUTONS` à 1 dans `config.h` et câble B sur GPIO16 et GND, C sur GPIO17 et GND.
 
 | Bouton | Appui court | Appui long |
 | --- | --- | --- |
@@ -93,7 +93,7 @@ Pour les ajouter, mets `AVEC_BOUTONS` à 1 dans `config.h` et câble B sur GPIO1
 
 ## Veille profonde
 
-Un appui très long de 3 secondes sur A éteint presque tout : la LED s'éteint et le téléphone voit l'intercom se déconnecter. Un appui sur A le réveille ; il redémarre et se reconnecte tout seul au téléphone en quelques secondes.
+Un appui très long de 3 secondes sur A éteint presque tout : le téléphone voit l'intercom se déconnecter. Un appui sur A le réveille ; il redémarre et se reconnecte tout seul au téléphone en quelques secondes.
 
 En veille, l'ESP32 ne consomme que quelques µA, mais la carte et l'ampli continuent de consommer un peu : le régulateur et la LED rouge d'alimentation de la D1 mini, alors que le MAX98357A est coupé par sa broche SD. Pour un rangement de plusieurs jours, garde un vrai interrupteur sur la batterie.
 
@@ -115,7 +115,7 @@ La clé de mise à jour est `OTA_KEY` dans `config.h` (`intercom-moto` par défa
 
 1. Copie `include/config.example.h` en `include/config.h` (tu peux changer le nom Bluetooth et activer les boutons).
 2. Branche la carte en USB, lance `pio run -t upload`, puis `pio device monitor`.
-3. Sur le téléphone, cherche « Intercom Moto » dans le Bluetooth et appaire-le. La LED bleue de la carte s'allume une fois connecté.
+3. Sur le téléphone, cherche « Intercom Moto » dans le Bluetooth et appaire-le.
 4. Lance une musique : elle sort dans les haut-parleurs. Règle le volume depuis le téléphone (ou avec les boutons si tu les as ajoutés).
 
 La carte se reconnecte toute seule au dernier téléphone appairé au démarrage suivant.

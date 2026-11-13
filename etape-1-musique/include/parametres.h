@@ -37,16 +37,16 @@
 #define GAIN_DEPART 9
 #endif
 #ifndef BROCHE_LED
-#define BROCHE_LED 2
+#define BROCHE_LED -1
 #endif
 #ifndef BROCHE_BOUTON_A
-#define BROCHE_BOUTON_A 15
+#define BROCHE_BOUTON_A 4
 #endif
 #ifndef BROCHE_BOUTON_B
 #define BROCHE_BOUTON_B 16
 #endif
 #ifndef BROCHE_BOUTON_C
-#define BROCHE_BOUTON_C 4
+#define BROCHE_BOUTON_C 17
 #endif
 #ifndef COMMANDES_PRIO
 #define COMMANDES_PRIO 3
@@ -149,4 +149,7 @@
 #endif
 #ifndef BROCHE_MICRO_LR
 #define BROCHE_MICRO_LR 33
+#endif
+#ifndef BROCHE_BOUTON_A_MASSE
+#define BROCHE_BOUTON_A_MASSE 2
 #endif
