@@ -29,6 +29,7 @@ void veilleProfonde() {
   delay(300);                     // laisse partir la réponse à l'app
   musiqueArreter();               // déconnexion propre du téléphone
   audioArreter();
+  ampliCouperPourVeille();         // l'ampli ne consomme plus rien
   rtc_gpio_pullup_en((gpio_num_t)BROCHE_BOUTON_A);
   rtc_gpio_pulldown_dis((gpio_num_t)BROCHE_BOUTON_A);
   esp_sleep_enable_ext0_wakeup((gpio_num_t)BROCHE_BOUTON_A, 0);  // réveil quand la broche passe à GND

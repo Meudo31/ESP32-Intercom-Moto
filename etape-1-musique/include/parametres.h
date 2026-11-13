@@ -19,25 +19,28 @@
 #define OTA_KEY "intercom-moto"
 #endif
 #ifndef BROCHE_I2S_BCLK
-#define BROCHE_I2S_BCLK 26
+#define BROCHE_I2S_BCLK 27
 #endif
 #ifndef BROCHE_I2S_LRC
-#define BROCHE_I2S_LRC 25
+#define BROCHE_I2S_LRC 26
 #endif
 #ifndef BROCHE_I2S_DOUT
-#define BROCHE_I2S_DOUT 22
+#define BROCHE_I2S_DOUT 14
+#endif
+#ifndef BROCHE_AMPLI_SD
+#define BROCHE_AMPLI_SD 13
 #endif
 #ifndef BROCHE_LED
 #define BROCHE_LED 2
 #endif
 #ifndef BROCHE_BOUTON_A
-#define BROCHE_BOUTON_A 32
+#define BROCHE_BOUTON_A 15
 #endif
 #ifndef BROCHE_BOUTON_B
 #define BROCHE_BOUTON_B 33
 #endif
 #ifndef BROCHE_BOUTON_C
-#define BROCHE_BOUTON_C 27
+#define BROCHE_BOUTON_C 4
 #endif
 #ifndef COMMANDES_PRIO
 #define COMMANDES_PRIO 3

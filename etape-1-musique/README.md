@@ -12,21 +12,21 @@ Le code compile avec PlatformIO (ESP32-WROOM-32, framework Arduino, bibliothèqu
 | --- | --- |
 | MAX98357A **VIN** | **5V** (ou VIN) de l'ESP32 |
 | MAX98357A **GND** | GND |
-| MAX98357A **BCLK** | GPIO26 |
-| MAX98357A **LRC** | GPIO25 |
-| MAX98357A **DIN** | GPIO22 |
-| MAX98357A **GAIN** et **SD** | non branchés (gain 9 dB, son mono gauche + droite) |
+| MAX98357A **BCLK** | GPIO27 |
+| MAX98357A **LRC** | GPIO26 |
+| MAX98357A **DIN** | GPIO14 |
+| MAX98357A **SD** | GPIO13 (le firmware coupe l'ampli pendant la veille profonde) |
+| MAX98357A **GAIN** | non branché (9 dB), ou à GND pour 12 dB. **Pas sur GPIO12** : c'est une broche de démarrage, l'ESP32 risque de ne plus démarrer |
 | MAX98357A sorties **+** et **−** | les deux haut-parleurs **en parallèle** (+ avec +, − avec −) |
+| Bouton A | GPIO15 et GND |
 
-| Bouton A (veille) | GPIO32 et GND |
-
-Sur la D1 mini ESP32, les broches sont marquées IO26, IO25, IO22 et IO32 ; la LED bleue de la carte est sur GPIO2.
+Ce brochage convient à la DevKit V1 et à la D1 mini ESP32 ; la LED bleue de la carte est sur GPIO2. Si on appuie sur le bouton pendant la mise sous tension, l'ESP32 démarre normalement mais n'affiche pas ses premiers messages sur le port série (GPIO15 est une broche de démarrage) : sans conséquence.
 
 Deux haut-parleurs 8 Ω en parallèle font 4 Ω, ce que le MAX98357A accepte. Pendant les essais, la carte est alimentée par son port USB.
 
 ## Le bouton A
 
-Un seul bouton (entre IO32 et GND) fait tout :
+Un seul bouton (entre GPIO15 et GND) fait tout :
 
 | Geste | Action |
 | --- | --- |
@@ -41,7 +41,7 @@ Pour enchaîner deux appuis, il faut moins de 0,4 s entre les deux ; c'est aussi
 
 ### Boutons B et C (option)
 
-Pour les ajouter, mets `AVEC_BOUTONS` à 1 dans `config.h` et câble B sur GPIO33 et GND, C sur GPIO27 et GND.
+Pour les ajouter, mets `AVEC_BOUTONS` à 1 dans `config.h` et câble B sur GPIO33 et GND, C sur GPIO4 et GND.
 
 | Bouton | Appui court | Appui long |
 | --- | --- | --- |
@@ -52,7 +52,7 @@ Pour les ajouter, mets `AVEC_BOUTONS` à 1 dans `config.h` et câble B sur GPIO3
 
 Un appui très long de 3 secondes sur A éteint presque tout : la LED s'éteint et le téléphone voit l'intercom se déconnecter. Un appui sur A le réveille ; il redémarre et se reconnecte tout seul au téléphone en quelques secondes.
 
-En veille, l'ESP32 ne consomme que quelques µA, mais la carte et l'ampli continuent de consommer un peu : le régulateur et la LED rouge d'alimentation de la D1 mini, et environ 2 à 3 mA pour le MAX98357A. Pour un rangement de plusieurs jours, garde un vrai interrupteur sur la batterie.
+En veille, l'ESP32 ne consomme que quelques µA, mais la carte et l'ampli continuent de consommer un peu : le régulateur et la LED rouge d'alimentation de la D1 mini, alors que le MAX98357A est coupé par sa broche SD. Pour un rangement de plusieurs jours, garde un vrai interrupteur sur la batterie.
 
 ## L'app Android
 

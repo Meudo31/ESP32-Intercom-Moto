@@ -1,5 +1,6 @@
 #include "audio.h"
 #include <Arduino.h>
+#include "driver/gpio.h"
 #include "driver/i2s.h"
 #include "parametres.h"
 
@@ -11,6 +12,7 @@ static volatile uint32_t s_octets = 0;
 static bool s_actif = false;
 
 void audioInit() {
+  ampliAllumer();
   i2s_config_t cfg = {};
   cfg.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX);
   cfg.sample_rate = 44100;
@@ -32,6 +34,23 @@ void audioInit() {
   broches.data_in_num = I2S_PIN_NO_CHANGE;
   i2s_set_pin(PORT_HP, &broches);
   s_actif = true;
+}
+
+// SD laissée en l'air (haute impédance) : la résistance du module la tire vers le haut,
+// ce qui allume l'ampli en mono (gauche + droite). SD à GND : ampli coupé.
+void ampliAllumer() {
+  if (BROCHE_AMPLI_SD < 0) return;
+  gpio_hold_dis((gpio_num_t)BROCHE_AMPLI_SD);   // maintien posé avant la veille profonde
+  gpio_deep_sleep_hold_dis();
+  pinMode(BROCHE_AMPLI_SD, INPUT);
+}
+
+void ampliCouperPourVeille() {
+  if (BROCHE_AMPLI_SD < 0) return;
+  pinMode(BROCHE_AMPLI_SD, OUTPUT);
+  digitalWrite(BROCHE_AMPLI_SD, LOW);
+  gpio_hold_en((gpio_num_t)BROCHE_AMPLI_SD);     // reste à GND pendant la veille
+  gpio_deep_sleep_hold_en();
 }
 
 void audioArreter() {
