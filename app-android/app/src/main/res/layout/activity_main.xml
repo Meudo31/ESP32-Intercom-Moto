@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/root"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Connexion à l'intercom (BLE) -->
+        <TextView
+            android:id="@+id/connState"
+            style="@style/Valeur"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnConnect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Se connecter à l'intercom" />
+
+        <!-- Téléphone et musique -->
+        <TextView style="@style/Section" android:text="Téléphone" />
+        <TextView android:id="@+id/phone" style="@style/Valeur" />
+
+        <TextView style="@style/Section" android:text="Morceau en cours" />
+        <TextView
+            android:id="@+id/title"
+            style="@style/Valeur"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+        <TextView android:id="@+id/artist" style="@style/Valeur" />
+        <ProgressBar
+            android:id="@+id/position"
+            style="@android:style/Widget.Material.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:max="1000" />
+        <TextView android:id="@+id/positionText" style="@style/Valeur" android:textColor="#757575" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+            <Button android:id="@+id/btnPrev" style="@style/BoutonLigne" android:text="⏮" android:textSize="20sp" />
+            <Button android:id="@+id/btnPlay" style="@style/BoutonLigne" android:text="⏯" android:textSize="20sp" />
+            <Button android:id="@+id/btnStop" style="@style/BoutonLigne" android:text="⏹" android:textSize="20sp" />
+            <Button android:id="@+id/btnNext" style="@style/BoutonLigne" android:text="⏭" android:textSize="20sp" />
+        </LinearLayout>
+
+        <!-- Volumes -->
+        <TextView style="@style/Section" android:text="Volume" />
+        <TextView android:id="@+id/volLabel" style="@style/Valeur" />
+        <SeekBar
+            android:id="@+id/volume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100" />
+        <TextView android:id="@+id/volPhoneLabel" style="@style/Valeur" android:layout_marginTop="8dp" />
+        <SeekBar
+            android:id="@+id/volumePhone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="127" />
+
+        <!-- Connexion musique -->
+        <TextView style="@style/Section" android:text="Bluetooth musique" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button android:id="@+id/btnBtDisconnect" style="@style/BoutonLigne" android:text="Déconnecter" />
+            <Button android:id="@+id/btnBtReconnect" style="@style/BoutonLigne" android:text="Reconnecter" />
+            <Button android:id="@+id/btnBtForget" style="@style/BoutonLigne" android:text="Oublier" />
+        </LinearLayout>
+
+        <!-- Réglages -->
+        <TextView style="@style/Section" android:text="Réglages" />
+        <TextView style="@style/Valeur" android:text="Nom Bluetooth" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:inputType="text"
+                android:maxLength="29" />
+            <Button android:id="@+id/btnName" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Renommer" />
+        </LinearLayout>
+        <TextView style="@style/Valeur" android:layout_marginTop="8dp" android:text="Veille automatique sans connexion (minutes, 0 = jamais)" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/autoSleep"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:inputType="number"
+                android:maxLength="3" />
+            <Button android:id="@+id/btnAutoSleep" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Appliquer" />
+        </LinearLayout>
+
+        <TextView style="@style/Valeur" android:layout_marginTop="8dp" android:text="Gain de l'ampli" />
+        <RadioGroup
+            android:id="@+id/gain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <RadioButton android:id="@+id/gain6" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="6 dB" />
+            <RadioButton android:id="@+id/gain9" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="9 dB" />
+            <RadioButton android:id="@+id/gain12" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="12 dB" />
+        </RadioGroup>
+
+        <!-- Alimentation -->
+        <TextView style="@style/Section" android:text="Alimentation" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button android:id="@+id/btnSleep" style="@style/BoutonLigne" android:text="Veille profonde" />
+            <Button android:id="@+id/btnRestart" style="@style/BoutonLigne" android:text="Redémarrer" />
+        </LinearLayout>
+
+        <!-- Carte -->
+        <TextView style="@style/Section" android:text="Intercom (carte et firmware)" />
+        <TextView android:id="@+id/live" style="@style/Valeur" />
+        <TextView android:id="@+id/info" style="@style/Valeur" android:layout_marginTop="6dp" android:textColor="#616161" />
+
+        <Button
+            android:id="@+id/btnOta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Mettre à jour le firmware" />
+    </LinearLayout>
+</ScrollView>

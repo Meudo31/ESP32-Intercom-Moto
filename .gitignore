@@ -1,2 +1,6 @@
 .pio/
 **/include/config.h
+app-android/.gradle/
+app-android/**/build/
+app-android/local.properties
+*.apk

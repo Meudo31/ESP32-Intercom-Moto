@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Intercom Moto</string>
+    <string name="ota_title">Mise à jour du firmware</string>
+    <string name="section_device">Intercom</string>
+    <string name="section_firmware">Nouveau firmware</string>
+    <string name="hint_key">Clé OTA (OTA_KEY dans config.h)</string>
+    <string name="pick_file">Choisir le fichier .bin</string>
+    <string name="no_file">Aucun fichier choisi.</string>
+    <string name="upload">Envoyer à l\'intercom</string>
+    <string name="section_via">Envoi par</string>
+    <string name="via_wifi">Wi-Fi (rapide, environ 15 s)</string>
+    <string name="via_wifi_old">Wi-Fi (Android 10 et plus)</string>
+    <string name="via_ble">Bluetooth (1 à 2 minutes)</string>
+    <string name="ota_help">Le fichier à envoyer est le firmware.bin de l\'étape 1. En Wi-Fi, l\'intercom ouvre un petit réseau Wi-Fi temporaire et Android demande l\'autorisation de le rejoindre ; Internet n\'est pas coupé. Garde le téléphone près de l\'intercom pendant l\'envoi. Si l\'envoi échoue, l\'ancien firmware reste en place.</string>
+</resources>
