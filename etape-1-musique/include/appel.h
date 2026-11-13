@@ -21,3 +21,6 @@ void appelRejeter();
 void appelRaccrocher();
 void appelVolumePlus(int pas);   // volume de l'appel (0 à 15), aussi transmis au téléphone
 uint8_t appelVolume();
+// « Déconnecter » / « Oublier » dans l'app : coupe aussi les appels et arrête la reconnexion auto.
+void appelDeconnecter();
+void appelReconnexionAuto();   // « Reconnecter » : la reconnexion automatique reprend

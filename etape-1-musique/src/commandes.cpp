@@ -66,9 +66,9 @@ static void executer(const Commande &c) {
         ESP.restart();
       }
       break;
-    case Cmd::DECONNECTER: musiqueDeconnecter(); break;
-    case Cmd::RECONNECTER: musiqueReconnecter(); break;
-    case Cmd::OUBLIER:     musiqueOublier(); break;
+    case Cmd::DECONNECTER: appelDeconnecter(); musiqueDeconnecter(); break;
+    case Cmd::RECONNECTER: appelReconnexionAuto(); musiqueReconnecter(); break;
+    case Cmd::OUBLIER:     appelDeconnecter(); musiqueOublier(); break;
     case Cmd::DECROCHER:   appelDecrocher(); break;
     case Cmd::REJETER:     appelRejeter(); break;
     case Cmd::RACCROCHER:  appelRaccrocher(); break;

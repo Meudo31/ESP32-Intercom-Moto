@@ -24,6 +24,7 @@ uint32_t audioOctetsRecus();
 // Change la source de l'ampli. frequence : celle de la sonnerie ou de la voix (ignorée pour la musique).
 void audioSetMode(ModeAudio mode, uint32_t frequence = 0);
 ModeAudio audioMode();
+size_t audioTailleBloc();   // taille d'un tampon DMA de l'ampli (trames), pour écrire par tampons entiers
 // Envoie des échantillons mono 16 bits sur les deux voies, avec le volume de l'intercom
 // multiplié par gainQ15 (32768 = 1,0). Ne fait rien si l'ampli n'est pas en mode « mode ».
 void audioEcrireMono(const int16_t *ech, size_t n, int32_t gainQ15, ModeAudio mode);

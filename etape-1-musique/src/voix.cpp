@@ -13,6 +13,9 @@
 #define FREQ_MICRO 16000          // l'INMP441 tourne à 16 kHz, ramené à 8 kHz si besoin
 #define BLOC_MICRO 160            // 10 ms à 16 kHz
 
+#define TAILLE_HP 8192            // 512 ms à 8 kHz
+#define TAILLE_TEL 4096           // 256 ms à 8 kHz
+
 static RingbufHandle_t s_versHp = nullptr;     // téléphone -> ampli
 static RingbufHandle_t s_versTel = nullptr;    // micro -> téléphone
 static volatile bool s_active = false;
@@ -45,42 +48,81 @@ void voixRecu(const uint8_t *donnees, uint32_t taille) {
   esp_hf_client_outgoing_data_ready();              // la pile vient chercher le son du micro
 }
 
+static size_t niveau(RingbufHandle_t rb, size_t taille) {
+  return taille - xRingbufferGetCurFreeSize(rb);
+}
+
+// Lit exactement n octets (moins si le tampon n'en a pas assez) ; renvoie le nombre lu.
+static size_t lire(RingbufHandle_t rb, uint8_t *dst, size_t n) {
+  size_t fait = 0;
+  while (fait < n) {
+    size_t k = 0;
+    uint8_t *p = (uint8_t *)xRingbufferReceiveUpTo(rb, &k, 0, n - fait);
+    if (!p) break;
+    memcpy(dst + fait, p, k);
+    vRingbufferReturnItem(rb, p);
+    fait += k;
+  }
+  return fait;
+}
+
+// Écrit la voix par tampons DMA entiers : l'écriture bloque jusqu'à ce qu'un tampon se
+// libère, ce qui cale le rythme sur l'ampli. S'il manque du son, on complète par du silence.
 static void tacheHautParleur(void *) {
-  static int16_t bloc[128];
+  static int16_t bloc[256];
   for (;;) {
     if (!s_active) {
       ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-      // Petite réserve de 40 ms avant de jouer, pour lisser l'arrivée des paquets
-      size_t reserve = s_frequence * 2 / 25;
-      for (int i = 0; i < 20 && s_active; i++) {
-        UBaseType_t libre = xRingbufferGetCurFreeSize(s_versHp);
-        if (4096 - libre >= reserve) break;
-        vTaskDelay(pdMS_TO_TICKS(10));
-      }
       continue;
     }
-    size_t n = 0;
-    uint8_t *p = (uint8_t *)xRingbufferReceiveUpTo(s_versHp, &n, pdMS_TO_TICKS(50), sizeof bloc);
-    if (!p) continue;
-    memcpy(bloc, p, n);
-    vRingbufferReturnItem(s_versHp, p);
-    audioEcrireMono(bloc, n / 2, s_gainQ15, ModeAudio::APPEL);
+    // Réserve de 90 ms avant de jouer : 48 ms pour remplir les tampons de l'ampli,
+    // le reste pour absorber l'arrivée irrégulière des paquets.
+    size_t reserve = s_frequence * 2 * 90 / 1000;
+    while (s_active && niveau(s_versHp, TAILLE_HP) < reserve) vTaskDelay(pdMS_TO_TICKS(5));
+    uint32_t manques = 0;
+    while (s_active) {
+      if (audioMode() != ModeAudio::APPEL) {   // sonnerie encore en cours : on jette la voix
+        size_t n = 0;
+        void *p = xRingbufferReceiveUpTo(s_versHp, &n, pdMS_TO_TICKS(20), 512);
+        if (p) vRingbufferReturnItem(s_versHp, p);
+        continue;
+      }
+      size_t trames = audioTailleBloc();
+      if (trames > 256) trames = 256;
+      // Trop de retard (le téléphone envoie un peu plus vite que l'ampli ne joue) : on rattrape
+      if (niveau(s_versHp, TAILLE_HP) > s_frequence * 2 / 5) {   // > 200 ms
+        lire(s_versHp, (uint8_t *)bloc, trames * 2);
+      }
+      size_t lu = lire(s_versHp, (uint8_t *)bloc, trames * 2);
+      if (lu < trames * 2) {
+        memset((uint8_t *)bloc + lu, 0, trames * 2 - lu);
+        if (++manques % 50 == 1) Serial.printf("[Voix] Son du téléphone en retard (%u fois)\n", (unsigned)manques);
+      }
+      audioEcrireMono(bloc, trames, s_gainQ15, ModeAudio::APPEL);
+    }
   }
 }
 
 // ---------- micro -> téléphone ----------
 
+// Appelée par la pile Bluetooth quand elle envoie un paquet. Le micro produit par blocs de
+// 10 ms : on attend d'avoir 30 ms d'avance avant d'en envoyer, sinon on enverrait un
+// mélange de son et de trous (voix hachée).
+static volatile bool s_amorce = true;
+
 uint32_t voixAEnvoyer(uint8_t *donnees, uint32_t taille) {
-  uint32_t fait = 0;
-  while (fait < taille) {
-    size_t n = 0;
-    uint8_t *p = (uint8_t *)xRingbufferReceiveUpTo(s_versTel, &n, 0, taille - fait);
-    if (!p) break;
-    memcpy(donnees + fait, p, n);
-    vRingbufferReturnItem(s_versTel, p);
-    fait += n;
+  if (s_amorce) {
+    if (niveau(s_versTel, TAILLE_TEL) < s_frequence * 2 * 30 / 1000) {
+      memset(donnees, 0, taille);
+      return taille;
+    }
+    s_amorce = false;
   }
-  if (fait < taille) memset(donnees + fait, 0, taille - fait);   // pas assez de son : du silence
+  size_t fait = lire(s_versTel, donnees, taille);
+  if (fait < taille) {
+    memset(donnees + fait, 0, taille - fait);
+    s_amorce = true;   // plus de son d'avance : on se refait une réserve
+  }
   return taille;
 }
 
@@ -169,7 +211,9 @@ static void tacheMicro(void *) {
       for (size_t i = 0; i + 1 < n; i += 2) sortie[m++] = (int16_t)(((int32_t)sortie[i] + sortie[i + 1]) / 2);
       n = m;
     }
-    xRingbufferSend(s_versTel, sortie, n * 2, 0);   // tampon plein : on perd ce bloc
+    // Trop d'avance (horloges du micro et du téléphone un peu différentes) : on jette 10 ms
+    if (niveau(s_versTel, TAILLE_TEL) > s_frequence * 2 / 8) lire(s_versTel, (uint8_t *)brut, s_frequence / 50);
+    xRingbufferSend(s_versTel, sortie, n * 2, 0);
   }
 }
 #endif
@@ -183,8 +227,8 @@ void voixInit() {
     digitalWrite(BROCHE_MICRO_LR, LOW);
   }
 #endif
-  s_versHp = xRingbufferCreate(4096, RINGBUF_TYPE_BYTEBUF);
-  s_versTel = xRingbufferCreate(2048, RINGBUF_TYPE_BYTEBUF);
+  s_versHp = xRingbufferCreate(TAILLE_HP, RINGBUF_TYPE_BYTEBUF);
+  s_versTel = xRingbufferCreate(TAILLE_TEL, RINGBUF_TYPE_BYTEBUF);
   voixSetVolume(VOLUME_APPEL_DEPART);
   xTaskCreate(tacheHautParleur, "voix_hp", VOIX_PILE, nullptr, VOIX_PRIO, &s_tacheHp);
 #if AVEC_MICRO
@@ -195,6 +239,7 @@ void voixInit() {
 void voixDemarrer(uint32_t frequence) {
   vider(s_versHp);
   vider(s_versTel);
+  s_amorce = true;
   s_frequence = frequence;
   s_active = true;
   xTaskNotifyGive(s_tacheHp);

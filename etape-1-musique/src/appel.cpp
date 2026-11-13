@@ -22,6 +22,8 @@ static volatile EtatAppel s_etat = EtatAppel::AUCUN;
 static char s_numero[24] = "";
 static portMUX_TYPE s_verrou = portMUX_INITIALIZER_UNLOCKED;
 static TaskHandle_t s_tache = nullptr;
+static esp_bd_addr_t s_adresse;               // téléphone connecté en mains libres
+static volatile bool s_reconnexionAuto = true;  // false après « Déconnecter » ou « Oublier » dans l'app
 
 static void reveiller() {
   if (s_tache) xTaskNotifyGive(s_tache);
@@ -33,6 +35,7 @@ static void evenement(esp_hf_client_cb_event_t ev, esp_hf_client_cb_param_t *p) 
   switch (ev) {
     case ESP_HF_CLIENT_CONNECTION_STATE_EVT:
       if (p->conn_stat.state == ESP_HF_CLIENT_CONNECTION_STATE_SLC_CONNECTED) {
+        memcpy(s_adresse, p->conn_stat.remote_bda, sizeof s_adresse);
         s_slc = true;
       } else if (p->conn_stat.state == ESP_HF_CLIENT_CONNECTION_STATE_DISCONNECTED) {
         s_slc = false;
@@ -102,6 +105,9 @@ static void tacheAppel(void *) {
   uint32_t telSansMainsLibres = 0;   // depuis quand le téléphone est connecté sans HFP
   uint8_t tentatives = 0;
   static char dernierNumero[sizeof s_numero] = "";
+  uint32_t dernierEssai = 0, slcDepuis = 0;
+  uint16_t essaisReconnexion = 0;
+  bool musiqueRelancee = false;
   for (;;) {
     ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(1000));
 
@@ -134,9 +140,42 @@ static void tacheAppel(void *) {
     sysClear((SYS_HFP_CONNECTE | SYS_SONNERIE | SYS_APPEL) & ~a);
     sysSet(a);
 
+    // Aucun lien avec le téléphone : on l'appelle nous-mêmes, par le profil mains libres
+    // (c'est celui que les téléphones attendent d'un casque), toutes les 15 s pendant
+    // 5 minutes puis toutes les minutes. Le téléphone connecte ensuite la musique.
+    bool telConnecte = sysIs(SYS_TEL_CONNECTE);
+    if (!telConnecte && !s_slc && s_reconnexionAuto) {
+      uint32_t t = millis();
+      uint32_t periode = essaisReconnexion < 20 ? 15000 : 60000;
+      if (t > 8000 && t - dernierEssai >= periode) {
+        dernierEssai = t;
+        uint8_t adr[6];
+        if (musiqueDernierTel(adr)) {
+          essaisReconnexion++;
+          Serial.printf("[Appel] Reconnexion au téléphone %02X:%02X:%02X:%02X:%02X:%02X (essai %u)\n",
+                        adr[0], adr[1], adr[2], adr[3], adr[4], adr[5], essaisReconnexion);
+          esp_hf_client_connect(adr);
+        }
+      }
+    } else {
+      essaisReconnexion = 0;
+    }
+    // Appels connectés mais pas la musique : on relance la musique (une fois par connexion)
+    if (s_slc && !telConnecte) {
+      if (!slcDepuis) slcDepuis = millis();
+      if (!musiqueRelancee && millis() - slcDepuis > 4000) {
+        musiqueRelancee = true;
+        Serial.println("[Appel] Appels connectés sans la musique : reconnexion de la musique");
+        musiqueReconnecter();
+      }
+    } else if (!s_slc) {
+      slcDepuis = 0;
+      musiqueRelancee = false;
+    }
+
     // Le téléphone a connecté la musique mais pas les appels : on le lui demande
     // (3 essais, par exemple si le téléphone a été appairé avant la version 2.0.0).
-    if (sysIs(SYS_TEL_CONNECTE) && !s_slc) {
+    if (telConnecte && !s_slc) {
       if (!telSansMainsLibres) telSansMainsLibres = millis();
       uint8_t adr[6];
       if (tentatives < 3 && millis() - telSansMainsLibres > 6000UL * (tentatives + 1) && musiqueAdresseTel(adr)) {
@@ -210,3 +249,10 @@ void appelVolumePlus(int pas) {
 }
 
 uint8_t appelVolume() { return s_volume; }
+
+void appelDeconnecter() {
+  s_reconnexionAuto = false;
+  if (s_slc) esp_hf_client_disconnect(s_adresse);
+}
+
+void appelReconnexionAuto() { s_reconnexionAuto = true; }

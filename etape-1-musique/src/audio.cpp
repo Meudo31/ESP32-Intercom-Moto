@@ -12,21 +12,27 @@ static volatile uint32_t s_octets = 0;
 static bool s_actif = false;
 static volatile ModeAudio s_mode = ModeAudio::MUSIQUE;
 static volatile uint16_t s_freqMusique = 44100;
+static SemaphoreHandle_t s_verrou = nullptr;   // une seule écriture I2S à la fois, pas pendant une réinstallation
+static size_t s_bloc = 256;                     // taille d'un tampon DMA, en trames stéréo
 
-void audioInit() {
-  ampliAllumer();
+// Installe le pilote I2S de l'ampli. Musique : 8 tampons de 256 trames (souple).
+// Appel : 6 tampons de 64 trames (48 ms à 8 kHz) pour garder peu de retard ; la voix
+// est alors écrite par tampons entiers, sinon l'ampli joue des tampons à moitié remplis
+// (son haché, « robotique »).
+static void installer(uint32_t frequence, int nbTampons, int tailleTampon) {
   i2s_config_t cfg = {};
   cfg.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX);
-  cfg.sample_rate = 44100;
+  cfg.sample_rate = frequence;
   cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT;
   cfg.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT;
   cfg.communication_format = I2S_COMM_FORMAT_STAND_I2S;
   cfg.intr_alloc_flags = 0;
-  cfg.dma_buf_count = 8;
-  cfg.dma_buf_len = 256;
+  cfg.dma_buf_count = nbTampons;
+  cfg.dma_buf_len = tailleTampon;
   cfg.use_apll = false;
   cfg.tx_desc_auto_clear = true;  // silence automatique si plus rien n'arrive
   i2s_driver_install(PORT_HP, &cfg, 0, nullptr);
+  s_bloc = tailleTampon;
 
   i2s_pin_config_t broches = {};
   broches.mck_io_num = I2S_PIN_NO_CHANGE;
@@ -35,8 +41,16 @@ void audioInit() {
   broches.data_out_num = BROCHE_I2S_DOUT;
   broches.data_in_num = I2S_PIN_NO_CHANGE;
   i2s_set_pin(PORT_HP, &broches);
+}
+
+void audioInit() {
+  ampliAllumer();
+  if (!s_verrou) s_verrou = xSemaphoreCreateMutex();
+  installer(44100, 8, 256);
   s_actif = true;
 }
+
+size_t audioTailleBloc() { return s_bloc; }
 
 // SD laissée en l'air (haute impédance) : la résistance du module la tire vers le haut,
 // ce qui allume l'ampli en mono (gauche + droite). SD à GND : ampli coupé.
@@ -85,8 +99,10 @@ void ampliCouperPourVeille() {
 
 void audioArreter() {
   if (!s_actif) return;
+  xSemaphoreTake(s_verrou, portMAX_DELAY);
   s_actif = false;
   i2s_driver_uninstall(PORT_HP);
+  xSemaphoreGive(s_verrou);
 }
 
 // Courbe quadratique : l'oreille perçoit mieux les petits volumes ainsi.
@@ -111,7 +127,9 @@ void audioRecevoir(const uint8_t *donnees, uint32_t taille) {
     uint32_t n = min<uint32_t>(total, 512);
     for (uint32_t i = 0; i < n; i++) tampon[i] = (int16_t)(((int32_t)ech[i] * g) >> 15);
     size_t ecrits;
-    i2s_write(PORT_HP, tampon, n * 2, &ecrits, portMAX_DELAY);
+    xSemaphoreTake(s_verrou, portMAX_DELAY);
+    if (s_actif && s_mode == ModeAudio::MUSIQUE) i2s_write(PORT_HP, tampon, n * 2, &ecrits, portMAX_DELAY);
+    xSemaphoreGive(s_verrou);
     ech += n;
     total -= n;
   }
@@ -121,7 +139,10 @@ void audioRecevoir(const uint8_t *donnees, uint32_t taille) {
 void audioFrequence(uint16_t frequence) {
   Serial.printf("[Audio] Fréquence : %u Hz\n", frequence);
   s_freqMusique = frequence;
-  if (s_actif && s_mode == ModeAudio::MUSIQUE) i2s_set_sample_rates(PORT_HP, frequence);
+  if (!s_actif || s_mode != ModeAudio::MUSIQUE) return;
+  xSemaphoreTake(s_verrou, portMAX_DELAY);
+  i2s_set_sample_rates(PORT_HP, frequence);
+  xSemaphoreGive(s_verrou);
 }
 
 ModeAudio audioMode() { return s_mode; }
@@ -133,8 +154,11 @@ void audioSetMode(ModeAudio mode, uint32_t frequence) {
   s_mode = mode;
   s_freqMode = f;
   if (!s_actif) return;
-  i2s_zero_dma_buffer(PORT_HP);
-  i2s_set_sample_rates(PORT_HP, f);
+  xSemaphoreTake(s_verrou, portMAX_DELAY);
+  i2s_driver_uninstall(PORT_HP);
+  if (mode == ModeAudio::APPEL) installer(f, 6, 64);
+  else installer(f, 8, 256);
+  xSemaphoreGive(s_verrou);
   static const char *noms[] = {"musique", "sonnerie", "appel"};
   Serial.printf("[Audio] Source : %s, %u Hz\n", noms[(int)mode], (unsigned)f);
 }
@@ -152,9 +176,12 @@ void audioEcrireMono(const int16_t *ech, size_t n, int32_t gainQ15, ModeAudio mo
       tampon[2 * i] = tampon[2 * i + 1] = (int16_t)v;
     }
     size_t ecrits;
-    i2s_write(PORT_HP, tampon, k * 4, &ecrits, portMAX_DELAY);
+    xSemaphoreTake(s_verrou, portMAX_DELAY);
+    bool ok = s_actif && s_mode == mode;
+    if (ok) i2s_write(PORT_HP, tampon, k * 4, &ecrits, portMAX_DELAY);
+    xSemaphoreGive(s_verrou);
+    if (!ok) return;
     ech += k;
     n -= k;
-    if (s_mode != mode) return;
   }
 }
