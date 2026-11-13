@@ -11,6 +11,8 @@ static void tacheLed(void *) {
     EventBits_t e = sysGet();
     bool allume;
     if (e & SYS_OTA) allume = (n % 2) == 0;                    // 5 Hz
+    else if (e & SYS_SONNERIE) allume = (n % 4) < 2;          // 2,5 Hz : appel entrant
+    else if (e & SYS_APPEL) allume = (n % 10) != 0;          // allumée, brève coupure : en appel
     else if (e & SYS_TEL_CONNECTE) allume = true;
     else if (e & SYS_BLE_CONNECTED) allume = (n % 20) == 0;    // éclair toutes les 2 s
     else allume = false;

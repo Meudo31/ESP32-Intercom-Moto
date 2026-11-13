@@ -30,6 +30,18 @@
 // Mise à jour par Wi-Fi : durée d'ouverture du point d'accès (secondes)
 #define WIFI_OTA_DUREE_S 300
 
+// ---------- Appels téléphoniques (profil Bluetooth « mains libres », HFP) ----------
+// Pendant un appel entrant, la sonnerie data/sonnerie.wav tourne en boucle dans le casque.
+//   sonnerie : court = décrocher, court + court = rejeter
+//   en appel : court = raccrocher, long = volume +, long + court = volume -
+// Micro I2S INMP441 : 1 = câblé (voir README), 0 = absent (l'interlocuteur n'entend rien)
+#define AVEC_MICRO 1
+#define GAIN_MICRO 4            // amplification du micro, de 1 à 32
+#define MICRO_CANAL -1          // -1 = détection automatique, 0 ou 1 pour forcer
+#define SONNERIE_VOLUME 80      // volume de la sonnerie, en % du volume de l'intercom
+#define SONNERIE_PAUSE_MS 1500  // silence entre deux sonneries
+#define VOLUME_APPEL_DEPART 10  // volume de l'appel (0 à 15) tant que le téléphone ne l'a pas donné
+
 // ---------- Broches ----------
 #define BROCHE_I2S_BCLK  27   // MAX98357A : BCLK
 #define BROCHE_I2S_LRC   26   // MAX98357A : LRC
@@ -41,6 +53,9 @@
 #define BROCHE_BOUTON_A  15   // doit être une broche RTC (réveil de la veille profonde)
 #define BROCHE_BOUTON_B  33
 #define BROCHE_BOUTON_C   4
+#define BROCHE_MICRO_SCK 18   // INMP441 : SCK
+#define BROCHE_MICRO_WS  19   // INMP441 : WS
+#define BROCHE_MICRO_SD  35   // INMP441 : SD (GPIO35 = entrée seulement, idéal ici)
 
 // ---------- Tâches FreeRTOS (priorité, taille de pile en octets) ----------
 #define COMMANDES_PRIO    3
@@ -55,6 +70,12 @@
 #define LED_PILE          2048
 #define WIFI_OTA_PRIO     2
 #define WIFI_OTA_PILE     6144
+#define APPEL_PRIO        3
+#define APPEL_PILE        4096
+#define SONNERIE_PRIO     4
+#define SONNERIE_PILE     3072
+#define VOIX_PRIO         5     // voix d'appel : haut-parleur et micro
+#define VOIX_PILE         3072
 
 // Période d'envoi des données à l'app (ms)
 #define BLE_NOTIFY_PERIOD_MS 250

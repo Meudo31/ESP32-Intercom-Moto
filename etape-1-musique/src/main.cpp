@@ -1,4 +1,4 @@
-// Intercom moto - étape 1 : lecteur de musique Bluetooth dans le casque
+// Intercom moto - étape 1 : musique et appels Bluetooth dans le casque
 //
 //  1. L'ESP32 apparaît comme une enceinte Bluetooth (« Intercom Moto ») sur le téléphone.
 //  2. La musique reçue (A2DP) part en I2S vers l'ampli MAX98357A et les haut-parleurs du casque.
@@ -6,11 +6,17 @@
 //     court + long = précédent, long = volume +, long + court = volume -,
 //     très long (3 s) = veille profonde, un appui la réveille.
 //     Boutons B et C en option (AVEC_BOUTONS dans config.h).
-//  4. L'app Android « Intercom Moto » se connecte en Bluetooth basse consommation (BLE) :
+//  4. Appels (depuis 2.0.0) : sonnerie data/sonnerie.wav à l'appel entrant ; bouton A :
+//     court = décrocher, court + court = rejeter ; en appel : court = raccrocher.
+//     Micro I2S INMP441 pour que l'interlocuteur entende.
+//  5. L'app Android « Intercom Moto » se connecte en Bluetooth basse consommation (BLE) :
 //     elle affiche toutes les infos, envoie les commandes et met à jour le firmware.
 //
 // Organisation FreeRTOS (un module .h/.cpp par élément) :
 //   musique_bt   pile Bluetooth classique (ses propres tâches) -> audio (I2S)
+//   appel        profil mains libres (HFP) : tâche « appel » (états, sonnerie, source de l'ampli)
+//   sonnerie     tâche qui joue data/sonnerie.wav en boucle
+//   voix         tâches « voix_hp » (téléphone -> ampli) et « voix_micro » (INMP441 -> téléphone)
 //   commandes    tâche qui exécute les commandes (file d'attente) des boutons et de l'app
 //   boutons_task tâche qui lit les boutons
 //   ble_task     tâche BLE : données 4 fois par seconde, commandes, mise à jour (ble_ota)
@@ -22,6 +28,7 @@
 // Les ESP32-S3, C3, C6 et P4 n'ont pas de Bluetooth classique et ne peuvent pas recevoir de musique.
 
 #include <Arduino.h>
+#include "appel.h"
 #include "audio.h"
 #include "ble_task.h"
 #include "boutons_task.h"
@@ -36,7 +43,7 @@
 
 void setup() {
   Serial.begin(115200);
-  Serial.printf("\nIntercom moto - étape 1 : musique Bluetooth, firmware %s\n", FW_VERSION);
+  Serial.printf("\nIntercom moto - étape 1 : musique et appels Bluetooth, firmware %s\n", FW_VERSION);
   sysInit();
   etatInit();
   veilleAuReveil();
@@ -46,6 +53,7 @@ void setup() {
   audioSetVolume(reglagesVolume());
   ampliSetGain(reglagesGain());
   musiqueDemarrer(reglagesNom());
+  appelDemarrer();   // appels : profil mains libres, sonnerie, micro
 
   commandesDemarrer();
   boutonsDemarrer();

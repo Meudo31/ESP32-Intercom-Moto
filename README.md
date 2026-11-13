@@ -4,7 +4,7 @@ Un intercom pour casque moto fait maison : la musique du téléphone en Bluetoot
 
 | Étape | Dossier | Ce que ça fait | Cartes |
 | --- | --- | --- | --- |
-| 1 | [etape-1-musique](etape-1-musique) | Lecteur de musique Bluetooth dans le casque, boutons lecture / pistes / volume | 1 × ESP32 |
+| 1 | [etape-1-musique](etape-1-musique) | Musique et appels Bluetooth dans le casque (sonnerie, décrocher / raccrocher au bouton, micro INMP441) | 1 × ESP32 |
 | 2 | [etape-2-intercom](etape-2-intercom) | Intercom vocal entre deux casques en ESP-NOW, déclenché à la voix ou au bouton | 2 × ESP32 |
 | 3 | [etape-3-musique-et-intercom](etape-3-musique-et-intercom) | Les deux en même temps : la musique baisse quand l'autre parle. Version sur batterie | 2 × ESP32 |
 | App | [app-android](app-android) | App Android : infos, commandes et mise à jour du firmware de l'étape 1 en BLE | |
@@ -29,6 +29,7 @@ Prix approximatifs ; chaque étape réutilise ce qui a été acheté avant. Les 
 | 2 haut-parleurs fins 40 mm, 8 Ω, 2 à 3 W (à glisser dans les mousses du casque) | 3 à 6 € | [Amazon](https://www.amazon.fr/s?k=haut-parleur+40mm+8+ohm+fin) · [AliExpress](https://fr.aliexpress.com/w/wholesale-speaker-40mm-8ohm-thin.html) |
 | 3 boutons poussoirs étanches 16 mm (gros, utilisables avec des gants) | 3 à 6 € | [Amazon](https://www.amazon.fr/s?k=bouton+poussoir+16mm+%C3%A9tanche) · [AliExpress](https://fr.aliexpress.com/w/wholesale-16mm-waterproof-push-button.html) |
 | Plaque d'essai + fils Dupont | 4 à 6 € | [Amazon](https://www.amazon.fr/s?k=breadboard+fils+dupont) |
+| Micro I2S INMP441 (pour les appels, firmware 2.0.0) | 2 à 4 € | [Amazon](https://www.amazon.fr/s?k=INMP441) · [AliExpress](https://fr.aliexpress.com/w/wholesale-INMP441.html) |
 
 ### Étape 2 : le second casque et les micros (environ 25 à 35 € en plus)
 

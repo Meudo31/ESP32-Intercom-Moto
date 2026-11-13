@@ -10,6 +10,8 @@ static volatile uint8_t s_volume = 100;
 static volatile int32_t s_gainQ15 = 32768;    // 32768 = 1,0
 static volatile uint32_t s_octets = 0;
 static bool s_actif = false;
+static volatile ModeAudio s_mode = ModeAudio::MUSIQUE;
+static volatile uint16_t s_freqMusique = 44100;
 
 void audioInit() {
   ampliAllumer();
@@ -101,7 +103,7 @@ uint32_t audioOctetsRecus() { return s_octets; }
 void audioRecevoir(const uint8_t *donnees, uint32_t taille) {
   static int16_t tampon[512];
   s_octets += taille;
-  if (!s_actif) return;
+  if (!s_actif || s_mode != ModeAudio::MUSIQUE) return;   // sonnerie ou appel en cours
   const int16_t *ech = (const int16_t *)donnees;
   uint32_t total = taille / 2;
   int32_t g = s_gainQ15;
@@ -118,5 +120,41 @@ void audioRecevoir(const uint8_t *donnees, uint32_t taille) {
 // La plupart des téléphones envoient du 44,1 kHz, certains du 48 kHz.
 void audioFrequence(uint16_t frequence) {
   Serial.printf("[Audio] Fréquence : %u Hz\n", frequence);
-  if (s_actif) i2s_set_sample_rates(PORT_HP, frequence);
+  s_freqMusique = frequence;
+  if (s_actif && s_mode == ModeAudio::MUSIQUE) i2s_set_sample_rates(PORT_HP, frequence);
+}
+
+ModeAudio audioMode() { return s_mode; }
+
+void audioSetMode(ModeAudio mode, uint32_t frequence) {
+  static uint32_t s_freqMode = 0;
+  uint32_t f = mode == ModeAudio::MUSIQUE ? s_freqMusique : frequence;
+  if (mode == s_mode && (mode == ModeAudio::MUSIQUE || f == s_freqMode)) return;
+  s_mode = mode;
+  s_freqMode = f;
+  if (!s_actif) return;
+  i2s_zero_dma_buffer(PORT_HP);
+  i2s_set_sample_rates(PORT_HP, f);
+  static const char *noms[] = {"musique", "sonnerie", "appel"};
+  Serial.printf("[Audio] Source : %s, %u Hz\n", noms[(int)mode], (unsigned)f);
+}
+
+void audioEcrireMono(const int16_t *ech, size_t n, int32_t gainQ15, ModeAudio mode) {
+  static int16_t tampon[2 * 128];   // utilisé par une seule source à la fois
+  if (!s_actif || s_mode != mode) return;
+  int32_t g = (int32_t)(((int64_t)s_gainQ15 * gainQ15) >> 15);
+  while (n > 0) {
+    size_t k = n < 128 ? n : 128;
+    for (size_t i = 0; i < k; i++) {
+      int32_t v = ((int32_t)ech[i] * g) >> 15;
+      if (v > 32767) v = 32767;
+      if (v < -32768) v = -32768;
+      tampon[2 * i] = tampon[2 * i + 1] = (int16_t)v;
+    }
+    size_t ecrits;
+    i2s_write(PORT_HP, tampon, k * 4, &ecrits, portMAX_DELAY);
+    ech += k;
+    n -= k;
+    if (s_mode != mode) return;
+  }
 }

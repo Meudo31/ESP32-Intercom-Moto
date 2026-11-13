@@ -41,7 +41,7 @@ static void tacheSurveillance(void *) {
   uint32_t seulDepuis = millis();
   for (;;) {
     musiqueRafraichirSignal();
-    bool occupe = sysGet() & (SYS_TEL_CONNECTE | SYS_BLE_CONNECTED | SYS_OTA);
+    bool occupe = sysGet() & (SYS_TEL_CONNECTE | SYS_HFP_CONNECTE | SYS_BLE_CONNECTED | SYS_OTA);
     if (occupe) seulDepuis = millis();
     uint8_t minutes = reglagesVeilleAuto();
     if (minutes > 0 && millis() - seulDepuis > minutes * 60000UL) {

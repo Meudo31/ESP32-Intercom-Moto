@@ -5,6 +5,7 @@
 #if __has_include(<esp_mac.h>)
 #include <esp_mac.h>
 #endif
+#include "appel.h"
 #include "audio.h"
 #include "ble_ota.h"
 #include "ble_protocol.h"
@@ -38,6 +39,9 @@ size_t appDataBuild(uint8_t *out, size_t max) {
   if (m.avrcp) d |= DRAPEAU_AVRCP;
   if (AVEC_BOUTONS) d |= DRAPEAU_BOUTONS;
   if (e & SYS_OTA) d |= DRAPEAU_OTA;
+  if (e & SYS_SONNERIE) d |= DRAPEAU_SONNERIE;
+  if (e & SYS_APPEL) d |= DRAPEAU_APPEL;
+  if (e & SYS_HFP_CONNECTE) d |= DRAPEAU_HFP;
 
   out[0] = DATA_VERSION;
   out[1] = d;
@@ -90,6 +94,10 @@ std::string appMediaJson() {
   ajouterNombre(j, "piste", g_etat.piste);
   ajouterNombre(j, "nb_pistes", g_etat.nbPistes);
   ajouterNombre(j, "duree_ms", g_etat.dureeMs);
+  char numero[24];
+  appelNumero(numero, sizeof numero);
+  ajouterTexte(j, "appel", appelEtatTexte());
+  ajouterTexte(j, "appel_numero", numero);
   j += '}';
   return j;
 }
@@ -130,6 +138,7 @@ std::string appInfoJson() {
   ajouterTexte(j, "sdk", ESP.getSdkVersion());
   ajouterTexte(j, "reset", raisonDemarrage());
   ajouterNombre(j, "boutons", AVEC_BOUTONS);
+  ajouterNombre(j, "micro", AVEC_MICRO);
   ajouterTexte(j, "build", __DATE__ " " __TIME__);
   j += '}';
   return j;
@@ -162,6 +171,13 @@ static void traiter(const char *cle, const char *val) {
   else if (!strcmp(cle, "deconnecter")) c.type = Cmd::DECONNECTER;
   else if (!strcmp(cle, "reconnecter")) c.type = Cmd::RECONNECTER;
   else if (!strcmp(cle, "oublier")) c.type = Cmd::OUBLIER;
+  else if (!strcmp(cle, "appel")) {
+    if (!strcmp(val, "decrocher")) c.type = Cmd::DECROCHER;
+    else if (!strcmp(val, "rejeter")) c.type = Cmd::REJETER;
+    else if (!strcmp(val, "raccrocher")) c.type = Cmd::RACCROCHER;
+    else return;
+  }
+  else if (!strcmp(cle, "volappel")) { c.type = Cmd::VOLUME_APPEL_PLUS; c.valeur = n - appelVolume(); }
   else { Serial.printf("[App] Réglage inconnu : %s\n", cle); return; }
   commandeEnvoyer(c);
 }

@@ -125,6 +125,12 @@ void musiqueOublier() {
   a2dp.clean_last_connection();
 }
 
+bool musiqueAdresseTel(uint8_t adresse[6]) {
+  if (!sysIs(SYS_TEL_CONNECTE)) return false;
+  memcpy(adresse, *a2dp.get_current_peer_address(), 6);
+  return true;
+}
+
 void musiqueRafraichirSignal() {
   if (!sysIs(SYS_TEL_CONNECTE)) return;
   a2dp.update_rssi();   // la réponse arrive plus tard : on lit la mesure précédente

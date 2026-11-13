@@ -15,7 +15,9 @@
 //  0  u8   version (1)
 //  1  u8   drapeaux : bit0 téléphone connecté (musique), bit1 lecture en cours,
 //                     bit2 télécommande AVRCP connectée, bit3 boutons B et C présents,
-//                     bit4 mise à jour en cours
+//                     bit4 mise à jour en cours,
+//                     bit5 appel entrant (ça sonne), bit6 appel en cours ou sortant,
+//                     bit7 téléphone connecté pour les appels (HFP)   — depuis le firmware 2.0.0
 //  2  u8   volume de l'intercom, 0 à 100 %
 //  3  u8   volume envoyé par le téléphone, 0 à 127
 //  4  u16  fréquence audio (Hz)
@@ -36,6 +38,9 @@
 #define DRAPEAU_AVRCP     0x04
 #define DRAPEAU_BOUTONS   0x08
 #define DRAPEAU_OTA       0x10
+#define DRAPEAU_SONNERIE  0x20
+#define DRAPEAU_APPEL     0x40
+#define DRAPEAU_HFP       0x80
 
 // Commandes (COMMAND), séparées par & :
 //   cmd=play | pause | basculer | suivant | precedent | stop
@@ -49,6 +54,9 @@
 //   deconnecter=1     déconnecte le téléphone
 //   reconnecter=1     se reconnecte au dernier téléphone
 //   oublier=1         oublie le dernier téléphone (il faudra le réappairer)
+//   appel=decrocher | rejeter | raccrocher
+//   volappel=0..15    volume de l'appel en cours
+// MEDIA contient aussi "appel" (état en texte) et "appel_numero" depuis le firmware 2.0.0.
 
 // Mise à jour par Wi-Fi : OTA_CTRL « WIFI <clé> » -> notification « WIFI <ssid> <mot de passe> ».
 // Le téléphone rejoint ce Wi-Fi puis envoie POST http://192.168.4.1/update?key=<clé>&md5=<md5>
