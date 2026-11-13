@@ -16,13 +16,22 @@ Le code compile avec PlatformIO (ESP32-WROOM-32, framework Arduino, bibliothèqu
 | MAX98357A **LRC** | GPIO26 |
 | MAX98357A **DIN** | GPIO14 |
 | MAX98357A **SD** | GPIO13 (le firmware coupe l'ampli pendant la veille profonde) |
-| MAX98357A **GAIN** | GPIO25 : gain réglable depuis l'app (6, 9 ou 12 dB). **Pas sur GPIO12** : c'est une broche de démarrage, l'ESP32 risque de ne plus démarrer |
+| MAX98357A **GAIN** | GPIO12 : gain réglable depuis l'app (6, 9 ou 12 dB). Attention, voir « Gain sur GPIO12 » ci-dessous |
 | MAX98357A sorties **+** et **−** | les deux haut-parleurs **en parallèle** (+ avec +, − avec −) |
 | Bouton A | GPIO15 et GND |
 
 Ce brochage convient à la DevKit V1 et à la D1 mini ESP32 ; la LED bleue de la carte est sur GPIO2. Si on appuie sur le bouton pendant la mise sous tension, l'ESP32 démarre normalement mais n'affiche pas ses premiers messages sur le port série (GPIO15 est une broche de démarrage) : sans conséquence.
 
 Deux haut-parleurs 8 Ω en parallèle font 4 Ω, ce que le MAX98357A accepte. Pendant les essais, la carte est alimentée par son port USB.
+
+### Gain sur GPIO12
+
+GPIO12 est une broche lue au démarrage de l'ESP32 : si elle est au niveau haut à la mise sous tension, l'ESP32 alimente sa mémoire flash en 1,8 V au lieu de 3,3 V. Le module WROOM-32 ne démarre alors plus : rien sur le port série, ou des erreurs de flash en boucle, et le flash par USB échoue. Or la broche GAIN du MAX98357A, laissée libre par l'ampli, peut tirer GPIO12 vers le haut.
+
+Si ça arrive, deux solutions :
+
+1. **Débrancher le fil GAIN** pendant la mise sous tension et le flash, puis le rebrancher.
+2. **Fixer une fois pour toutes la flash en 3,3 V** par eFuse : `espefuse.py --port COMx set_flash_voltage 3.3V`. GPIO12 n'est alors plus lu au démarrage. C'est **définitif et irréversible**, mais sans risque pour un WROOM-32 (sa flash est en 3,3 V). Ne pas le faire sur un module WROVER à flash 1,8 V.
 
 ## Le bouton A
 

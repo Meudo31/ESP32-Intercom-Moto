@@ -31,12 +31,12 @@
 #define WIFI_OTA_DUREE_S 300
 
 // ---------- Broches ----------
-// (GPIO12 est à éviter : s'il est tiré vers le haut au démarrage, l'ESP32 ne démarre plus)
 #define BROCHE_I2S_BCLK  27   // MAX98357A : BCLK
 #define BROCHE_I2S_LRC   26   // MAX98357A : LRC
 #define BROCHE_I2S_DOUT  14   // MAX98357A : DIN
 #define BROCHE_AMPLI_SD  13   // MAX98357A : SD (coupe l'ampli en veille), -1 si non câblée
-#define BROCHE_AMPLI_GAIN 25  // MAX98357A : GAIN (6, 9 ou 12 dB), -1 si non câblée
+#define BROCHE_AMPLI_GAIN 12  // MAX98357A : GAIN (6, 9 ou 12 dB), -1 si non câblée
+                              // GPIO12 = broche de démarrage : voir README (« Gain sur GPIO12 »)
 #define BROCHE_LED        2   // LED bleue de la carte
 #define BROCHE_BOUTON_A  15   // doit être une broche RTC (réveil de la veille profonde)
 #define BROCHE_BOUTON_B  33

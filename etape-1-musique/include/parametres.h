@@ -31,7 +31,7 @@
 #define BROCHE_AMPLI_SD 13
 #endif
 #ifndef BROCHE_AMPLI_GAIN
-#define BROCHE_AMPLI_GAIN 25
+#define BROCHE_AMPLI_GAIN 12
 #endif
 #ifndef GAIN_DEPART
 #define GAIN_DEPART 9
