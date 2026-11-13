@@ -22,6 +22,8 @@
 // Veille automatique après N minutes sans téléphone ni app connectés, 0 = jamais
 // (valeur de départ, modifiable depuis l'app).
 #define VEILLE_AUTO_MIN 0
+// Gain de l'ampli au premier démarrage : 6, 9 ou 12 dB (ensuite réglable depuis l'app et mémorisé)
+#define GAIN_DEPART 9
 // Clé demandée par l'app pour mettre à jour le firmware par Bluetooth
 #define OTA_KEY "intercom-moto"
 
@@ -34,6 +36,7 @@
 #define BROCHE_I2S_LRC   26   // MAX98357A : LRC
 #define BROCHE_I2S_DOUT  14   // MAX98357A : DIN
 #define BROCHE_AMPLI_SD  13   // MAX98357A : SD (coupe l'ampli en veille), -1 si non câblée
+#define BROCHE_AMPLI_GAIN 25  // MAX98357A : GAIN (6, 9 ou 12 dB), -1 si non câblée
 #define BROCHE_LED        2   // LED bleue de la carte
 #define BROCHE_BOUTON_A  15   // doit être une broche RTC (réveil de la veille profonde)
 #define BROCHE_BOUTON_B  33

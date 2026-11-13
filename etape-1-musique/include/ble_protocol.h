@@ -11,7 +11,7 @@
 #define BLE_UUID_OTA_CTRL "8a5c0006-2763-4123-8f80-5a3b7b30e82c"  // write, notify : BEGIN / END / ABORT / WIFI
 #define BLE_UUID_OTA_DATA "8a5c0007-2763-4123-8f80-5a3b7b30e82c"  // write : morceaux du .bin
 
-// Paquet DATA, version 1, little-endian, 32 octets :
+// Paquet DATA, version 1, little-endian, 33 octets :
 //  0  u8   version (1)
 //  1  u8   drapeaux : bit0 téléphone connecté (musique), bit1 lecture en cours,
 //                     bit2 télécommande AVRCP connectée, bit3 boutons B et C présents,
@@ -27,8 +27,9 @@
 // 26  i8   écart de signal Bluetooth avec le téléphone (dB, 0 = bon)
 // 27  u8   veille automatique (minutes, 0 = jamais)
 // 28  u32  compteur de changements de MEDIA : relire MEDIA quand il change
+// 32  u8   gain de l'ampli (dB : 6, 9 ou 12)   — depuis le firmware 1.5.0
 #define DATA_VERSION 1
-#define DATA_TAILLE 32
+#define DATA_TAILLE 33
 
 #define DRAPEAU_TEL       0x01
 #define DRAPEAU_LECTURE   0x02
@@ -42,6 +43,7 @@
 //   voltel=0..127     volume du téléphone (volume absolu AVRCP)
 //   veille=1          veille profonde (réveil : bouton A)
 //   veille_auto=0..240  minutes sans connexion avant la veille, 0 = jamais
+//   gain=6 | 9 | 12   gain de l'ampli (dB), mémorisé
 //   redemarrer=1
 //   nom=<texte>       nouveau nom Bluetooth (sans & ni =, 1 à 29 caractères), puis redémarrage
 //   deconnecter=1     déconnecte le téléphone

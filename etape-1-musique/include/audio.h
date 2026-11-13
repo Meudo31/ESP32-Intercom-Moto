@@ -7,6 +7,9 @@ void audioArreter();
 // Broche SD du MAX98357A : allume l'ampli, ou le coupe et le garde coupé pendant la veille profonde.
 void ampliAllumer();
 void ampliCouperPourVeille();
+// Gain du MAX98357A : 6, 9 ou 12 dB (autre valeur ramenée à la plus proche). Renvoie le gain appliqué.
+uint8_t ampliSetGain(uint8_t db);
+uint8_t ampliGain();
 // Appelée par la pile Bluetooth à chaque paquet de musique (16 bits stéréo).
 void audioRecevoir(const uint8_t *donnees, uint32_t taille);
 void audioFrequence(uint16_t frequence);

@@ -22,6 +22,7 @@ final class BleProtocol {
     /** Paquet DATA version 1 (32 octets, little-endian). */
     static final class Data {
         int version, flags, volume, phoneVolume, sampleRate, rssi, autoSleepMin;
+        int gainDb = -1;   // -1 : firmware plus ancien que 1.5.0
         long uptimeS, freeHeap, minFreeHeap, audioBytes, positionMs, mediaCounter;
 
         boolean has(int flag) { return (flags & flag) != 0; }
@@ -42,6 +43,7 @@ final class BleProtocol {
             d.rssi = p[26];
             d.autoSleepMin = u8(p, 27);
             d.mediaCounter = u32(p, 28);
+            if (p.length >= 33) d.gainDb = u8(p, 32);
             return d;
         }
     }

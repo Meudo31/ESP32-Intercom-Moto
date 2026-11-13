@@ -45,6 +45,34 @@ void ampliAllumer() {
   pinMode(BROCHE_AMPLI_SD, INPUT);
 }
 
+// GAIN du MAX98357A : à GND = 12 dB, en l'air = 9 dB, au + = 6 dB.
+// L'ampli lit GAIN en sortant de l'arrêt : on le coupe un instant par SD pour qu'il relise.
+static uint8_t s_gain = 9;
+
+uint8_t ampliGain() { return s_gain; }
+
+uint8_t ampliSetGain(uint8_t db) {
+  s_gain = db >= 11 ? 12 : (db <= 7 ? 6 : 9);
+  if (BROCHE_AMPLI_GAIN < 0) return s_gain;
+  if (s_gain == 12) {
+    pinMode(BROCHE_AMPLI_GAIN, OUTPUT);
+    digitalWrite(BROCHE_AMPLI_GAIN, LOW);
+  } else if (s_gain == 6) {
+    pinMode(BROCHE_AMPLI_GAIN, OUTPUT);
+    digitalWrite(BROCHE_AMPLI_GAIN, HIGH);
+  } else {
+    pinMode(BROCHE_AMPLI_GAIN, INPUT);
+  }
+  if (BROCHE_AMPLI_SD >= 0) {
+    pinMode(BROCHE_AMPLI_SD, OUTPUT);
+    digitalWrite(BROCHE_AMPLI_SD, LOW);
+    delay(20);
+    pinMode(BROCHE_AMPLI_SD, INPUT);   // rallume l'ampli, qui relit GAIN
+  }
+  Serial.printf("[Audio] Gain de l'ampli : %u dB\n", s_gain);
+  return s_gain;
+}
+
 void ampliCouperPourVeille() {
   if (BROCHE_AMPLI_SD < 0) return;
   pinMode(BROCHE_AMPLI_SD, OUTPUT);

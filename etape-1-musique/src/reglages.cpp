@@ -6,6 +6,7 @@
 static char s_nom[32] = NOM_BLUETOOTH;
 static uint8_t s_volume = VOLUME_DEPART;
 static uint8_t s_veille = VEILLE_AUTO_MIN;
+static uint8_t s_gain = GAIN_DEPART;
 static Preferences s_prefs;
 
 void reglagesCharger() {
@@ -14,6 +15,7 @@ void reglagesCharger() {
   strlcpy(s_nom, nom.c_str(), sizeof s_nom);
   s_volume = s_prefs.getUChar("volume", VOLUME_DEPART);
   s_veille = s_prefs.getUChar("veille", VEILLE_AUTO_MIN);
+  s_gain = s_prefs.getUChar("gain", GAIN_DEPART);
   Serial.printf("[Réglages] nom « %s », volume %u %%, veille auto %u min\n", s_nom, s_volume, s_veille);
 }
 
@@ -37,4 +39,11 @@ uint8_t reglagesVeilleAuto() { return s_veille; }
 void reglagesSetVeilleAuto(uint8_t minutes) {
   s_veille = minutes;
   s_prefs.putUChar("veille", minutes);
+}
+
+uint8_t reglagesGain() { return s_gain; }
+
+void reglagesSetGain(uint8_t db) {
+  s_gain = db;
+  s_prefs.putUChar("gain", db);
 }

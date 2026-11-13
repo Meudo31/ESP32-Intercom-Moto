@@ -44,6 +44,9 @@ static void executer(const Commande &c) {
       Serial.printf("[Commande] Volume du téléphone : %u / 127\n", musiqueVolumeTel());
       break;
     case Cmd::VEILLE:      veilleProfonde(); break;
+    case Cmd::GAIN:
+      reglagesSetGain(ampliSetGain(c.valeur));
+      break;
     case Cmd::VEILLE_AUTO:
       reglagesSetVeilleAuto(constrain(c.valeur, 0, 240));
       Serial.printf("[Commande] Veille auto : %u min\n", reglagesVeilleAuto());

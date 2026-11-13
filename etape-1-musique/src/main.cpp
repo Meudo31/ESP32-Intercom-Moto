@@ -44,6 +44,7 @@ void setup() {
 
   audioInit();
   audioSetVolume(reglagesVolume());
+  ampliSetGain(reglagesGain());
   musiqueDemarrer(reglagesNom());
 
   commandesDemarrer();

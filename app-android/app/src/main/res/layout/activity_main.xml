@@ -110,6 +110,17 @@
             <Button android:id="@+id/btnAutoSleep" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Appliquer" />
         </LinearLayout>
 
+        <TextView style="@style/Valeur" android:layout_marginTop="8dp" android:text="Gain de l'ampli" />
+        <RadioGroup
+            android:id="@+id/gain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <RadioButton android:id="@+id/gain6" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="6 dB" />
+            <RadioButton android:id="@+id/gain9" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="9 dB" />
+            <RadioButton android:id="@+id/gain12" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="12 dB" />
+        </RadioGroup>
+
         <!-- Alimentation -->
         <TextView style="@style/Section" android:text="Alimentation" />
         <LinearLayout

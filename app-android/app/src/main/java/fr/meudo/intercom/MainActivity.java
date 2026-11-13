@@ -26,6 +26,8 @@ public class MainActivity extends Activity implements BleLink.Listener {
     private ProgressBar position;
     private SeekBar volume, volumePhone;
     private EditText name, autoSleep;
+    private RadioGroup gain;
+    private boolean settingGain;   // mise à jour par le programme : ne pas renvoyer la commande
     private Button btnConnect;
     private final List<View> commandViews = new ArrayList<>();
 
@@ -58,6 +60,15 @@ public class MainActivity extends Activity implements BleLink.Listener {
         live = findViewById(R.id.live);
         info = findViewById(R.id.info);
         btnConnect = findViewById(R.id.btnConnect);
+        gain = findViewById(R.id.gain);
+        gain.setOnCheckedChangeListener((g, id) -> {
+            if (settingGain || id == -1) return;
+            int db = id == R.id.gain6 ? 6 : id == R.id.gain12 ? 12 : 9;
+            send("gain=" + db, "Gain de l'ampli : " + db + " dB");
+        });
+        commandViews.add(findViewById(R.id.gain6));
+        commandViews.add(findViewById(R.id.gain9));
+        commandViews.add(findViewById(R.id.gain12));
 
         btnConnect.setOnClickListener(v -> startConnection());
         command(R.id.btnPrev, "cmd=precedent");
@@ -175,6 +186,12 @@ public class MainActivity extends Activity implements BleLink.Listener {
             volPhoneLabel.setText(phoneVolText(d.phoneVolume));
         }
         if (!autoSleep.hasFocus()) autoSleep.setText(String.valueOf(d.autoSleepMin));
+        int gainId = d.gainDb == 6 ? R.id.gain6 : d.gainDb == 9 ? R.id.gain9 : d.gainDb == 12 ? R.id.gain12 : -1;
+        if (gainId != -1 && gain.getCheckedRadioButtonId() != gainId) {
+            settingGain = true;
+            gain.check(gainId);
+            settingGain = false;
+        }
 
         if (durationMs > 0) {
             position.setProgress((int) Math.min(1000, d.positionMs * 1000 / durationMs));

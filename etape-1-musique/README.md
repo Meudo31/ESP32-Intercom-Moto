@@ -16,7 +16,7 @@ Le code compile avec PlatformIO (ESP32-WROOM-32, framework Arduino, bibliothèqu
 | MAX98357A **LRC** | GPIO26 |
 | MAX98357A **DIN** | GPIO14 |
 | MAX98357A **SD** | GPIO13 (le firmware coupe l'ampli pendant la veille profonde) |
-| MAX98357A **GAIN** | non branché (9 dB), ou à GND pour 12 dB. **Pas sur GPIO12** : c'est une broche de démarrage, l'ESP32 risque de ne plus démarrer |
+| MAX98357A **GAIN** | GPIO25 : gain réglable depuis l'app (6, 9 ou 12 dB). **Pas sur GPIO12** : c'est une broche de démarrage, l'ESP32 risque de ne plus démarrer |
 | MAX98357A sorties **+** et **−** | les deux haut-parleurs **en parallèle** (+ avec +, − avec −) |
 | Bouton A | GPIO15 et GND |
 

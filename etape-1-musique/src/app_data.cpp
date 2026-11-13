@@ -52,6 +52,7 @@ size_t appDataBuild(uint8_t *out, size_t max) {
   out[26] = (uint8_t)m.rssi;
   out[27] = reglagesVeilleAuto();
   put32(out + 28, m.compteur);
+  out[32] = ampliGain();
   return DATA_TAILLE;
 }
 
@@ -151,6 +152,7 @@ static void traiter(const char *cle, const char *val) {
   else if (!strcmp(cle, "voltel")) { c.type = Cmd::VOLUME_TEL; c.valeur = n; }
   else if (!strcmp(cle, "veille")) c.type = Cmd::VEILLE;
   else if (!strcmp(cle, "veille_auto")) { c.type = Cmd::VEILLE_AUTO; c.valeur = n; }
+  else if (!strcmp(cle, "gain")) { c.type = Cmd::GAIN; c.valeur = n; }
   else if (!strcmp(cle, "redemarrer")) c.type = Cmd::REDEMARRER;
   else if (!strcmp(cle, "nom")) {
     if (!*val) return;

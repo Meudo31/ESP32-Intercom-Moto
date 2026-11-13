@@ -10,6 +10,7 @@ enum class Cmd : uint8_t {
   VOLUME_TEL_PLUS,  // valeur : pas (sur 127)
   VEILLE,
   VEILLE_AUTO,    // valeur : minutes
+  GAIN,           // valeur : 6, 9 ou 12 dB
   REDEMARRER,
   NOM,            // texte
   DECONNECTER, RECONNECTER, OUBLIER,
