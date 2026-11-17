@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include "BluetoothA2DPSink.h"
+#include "esp_gap_bt_api.h"
 #include "audio.h"
 #include "etat.h"
 #include "system_events.h"
@@ -101,7 +102,9 @@ void musiqueDemarrer(const char *nom) {
   a2dp.set_avrc_rn_playstatus_callback(statutLecture);
   a2dp.set_avrc_rn_play_pos_callback(position, 1);
   a2dp.set_rssi_active(true);
-  a2dp.start(nom);  // reconnexion automatique au dernier téléphone
+  // true : reconnexion automatique au dernier téléphone (sans ce paramètre, la bibliothèque
+  // ne mémorise pas le téléphone et ne se reconnecte jamais)
+  a2dp.start(nom, true);
   Serial.printf("[Musique] Prêt : cherche « %s » dans le Bluetooth du téléphone\n", nom);
 }
 
@@ -123,6 +126,29 @@ void musiqueReconnecter() { a2dp.reconnect(); }
 void musiqueOublier() {
   a2dp.disconnect();
   a2dp.clean_last_connection();
+}
+
+bool musiqueAdresseTel(uint8_t adresse[6]) {
+  if (!sysIs(SYS_TEL_CONNECTE)) return false;
+  memcpy(adresse, *a2dp.get_current_peer_address(), 6);
+  return true;
+}
+
+bool musiqueDernierTel(uint8_t adresse[6]) {
+  static const uint8_t vide[6] = {0, 0, 0, 0, 0, 0};
+  const uint8_t *a = *a2dp.get_last_peer_address();
+  if (memcmp(a, vide, 6) != 0) {
+    memcpy(adresse, a, 6);
+    return true;
+  }
+  // Pas encore mémorisé par la bibliothèque : premier téléphone appairé
+  int n = esp_bt_gap_get_bond_device_num();
+  if (n <= 0) return false;
+  esp_bd_addr_t liste[4];
+  if (n > 4) n = 4;
+  if (esp_bt_gap_get_bond_device_list(&n, liste) != ESP_OK || n <= 0) return false;
+  memcpy(adresse, liste[0], 6);
+  return true;
 }
 
 void musiqueRafraichirSignal() {

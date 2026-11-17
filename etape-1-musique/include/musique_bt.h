@@ -16,4 +16,6 @@ uint8_t musiqueVolumeTel();
 void musiqueDeconnecter();
 void musiqueReconnecter();
 void musiqueOublier();
+bool musiqueAdresseTel(uint8_t adresse[6]);   // adresse du téléphone connecté (musique)
+bool musiqueDernierTel(uint8_t adresse[6]);   // dernier téléphone connu (pour se reconnecter)
 void musiqueRafraichirSignal();   // à appeler régulièrement : mesure du signal
