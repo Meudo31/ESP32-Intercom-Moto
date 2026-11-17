@@ -34,10 +34,10 @@
 // Pendant un appel entrant, la sonnerie data/sonnerie.wav tourne en boucle dans le casque.
 //   sonnerie : court = décrocher, court + court = rejeter
 //   en appel : court = raccrocher, long = volume +, long + court = volume -
-// Micro I2S INMP441 : 1 = câblé (voir README), 0 = absent (l'interlocuteur n'entend rien)
+// Micro analogique avec préampli (module MAX9814 conseillé) : 1 = câblé (voir README),
+// 0 = absent (l'interlocuteur n'entend rien)
 #define AVEC_MICRO 1
 #define GAIN_MICRO 4            // amplification du micro au départ, de 1 à 32 (ensuite réglable dans l'app)
-#define MICRO_CANAL -1          // -1 = détection automatique, 0 ou 1 pour forcer
 #define SONNERIE_VOLUME 80      // volume de la sonnerie, en % du volume de l'intercom
 #define SONNERIE_PAUSE_MS 1500  // silence entre deux sonneries
 #define VOLUME_APPEL_DEPART 10  // volume de l'appel (0 à 15) tant que le téléphone ne l'a pas donné
@@ -54,10 +54,7 @@
 #define BROCHE_BOUTON_A_MASSE 2  // broche mise à GND par le firmware (autre patte du bouton), -1 si le bouton va à GND
 #define BROCHE_BOUTON_B  16
 #define BROCHE_BOUTON_C  17
-#define BROCHE_MICRO_SCK 25   // INMP441 : SCK
-#define BROCHE_MICRO_WS  32   // INMP441 : WS
-#define BROCHE_MICRO_SD  35   // INMP441 : SD (GPIO35 = entrée seulement, idéal ici)
-#define BROCHE_MICRO_LR  33   // INMP441 : L/R, mise à GND par le firmware (voie gauche), -1 si L/R câblée à GND
+#define BROCHE_MICRO     35   // sortie OUT du module micro : une broche de l'ADC1 (32 à 39)
 
 // ---------- Tâches FreeRTOS (priorité, taille de pile en octets) ----------
 #define COMMANDES_PRIO    3

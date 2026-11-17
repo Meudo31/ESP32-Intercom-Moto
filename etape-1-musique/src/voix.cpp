@@ -4,13 +4,14 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/ringbuf.h>
 #include <freertos/task.h>
+#include "driver/adc.h"
 #include "driver/i2s.h"
 #include "esp_hf_client_api.h"
 #include "audio.h"
 #include "parametres.h"
 
-#define PORT_MICRO I2S_NUM_1
-#define FREQ_MICRO 16000          // l'INMP441 tourne à 16 kHz, ramené à 8 kHz si besoin
+#define PORT_MICRO I2S_NUM_0      // seul l'I2S0 sait lire l'ADC
+#define FREQ_MICRO 16000          // l'ADC tourne à 16 kHz, ramené à 8 kHz (moyenne) si besoin
 #define BLOC_MICRO 160            // 10 ms à 16 kHz
 
 #define TAILLE_HP 8192            // 512 ms à 8 kHz
@@ -127,93 +128,122 @@ uint32_t voixAEnvoyer(uint8_t *donnees, uint32_t taille) {
 }
 
 #if AVEC_MICRO
+// Micro analogique (module MAX9814, MAX4466…) sur une entrée de l'ADC1, lu par le
+// « mode ADC » de l'I2S0 : l'ESP32 échantillonne seul, en DMA, sans charger le processeur.
+// (L'ampli est sur l'I2S1.)
+static adc1_channel_t canalAdc(int gpio) {
+  switch (gpio) {
+    case 36: return ADC1_CHANNEL_0;
+    case 37: return ADC1_CHANNEL_1;
+    case 38: return ADC1_CHANNEL_2;
+    case 39: return ADC1_CHANNEL_3;
+    case 32: return ADC1_CHANNEL_4;
+    case 33: return ADC1_CHANNEL_5;
+    case 34: return ADC1_CHANNEL_6;
+    case 35: return ADC1_CHANNEL_7;
+    default: return ADC1_CHANNEL_MAX;   // pas une broche de l'ADC1
+  }
+}
+
 static bool microOuvrir() {
+  adc1_channel_t canal = canalAdc(BROCHE_MICRO);
+  if (canal == ADC1_CHANNEL_MAX) {
+    Serial.printf("[Voix] GPIO%d n'est pas une entrée de l'ADC1 (32 à 39) : pas de micro\n", BROCHE_MICRO);
+    return false;
+  }
   i2s_config_t cfg = {};
-  cfg.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX);
+  cfg.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_ADC_BUILT_IN);
   cfg.sample_rate = FREQ_MICRO;
-  cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT;   // l'INMP441 envoie 24 bits dans 32
-  cfg.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT;
-  cfg.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+  cfg.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT;
+  cfg.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
+  cfg.communication_format = I2S_COMM_FORMAT_STAND_MSB;
   cfg.intr_alloc_flags = 0;
   cfg.dma_buf_count = 4;
   cfg.dma_buf_len = BLOC_MICRO;
   cfg.use_apll = false;
   if (i2s_driver_install(PORT_MICRO, &cfg, 0, nullptr) != ESP_OK) {
-    Serial.println("[Voix] Impossible de démarrer le micro (I2S1)");
+    Serial.println("[Voix] Impossible de démarrer le micro (I2S0 en mode ADC)");
     return false;
   }
-  i2s_pin_config_t broches = {};
-  broches.mck_io_num = I2S_PIN_NO_CHANGE;
-  broches.bck_io_num = BROCHE_MICRO_SCK;
-  broches.ws_io_num = BROCHE_MICRO_WS;
-  broches.data_out_num = I2S_PIN_NO_CHANGE;
-  broches.data_in_num = BROCHE_MICRO_SD;
-  i2s_set_pin(PORT_MICRO, &broches);
+  i2s_set_adc_mode(ADC_UNIT_1, canal);
+  adc1_config_channel_atten(canal, ADC_ATTEN_DB_11);   // entrée de 0 à environ 3 V
+  i2s_adc_enable(PORT_MICRO);
   return true;
 }
 
+static void microFermer() {
+  i2s_adc_disable(PORT_MICRO);
+  i2s_driver_uninstall(PORT_MICRO);
+}
+
 static void tacheMicro(void *) {
-  static int32_t brut[2 * BLOC_MICRO];
+  static uint16_t brut[BLOC_MICRO];
   static int16_t sortie[BLOC_MICRO];
   bool ouvert = false;
-  int canal = MICRO_CANAL;
-  uint64_t energie[2] = {0, 0};
-  int blocsMesures = 0;
-  int32_t dcEntree = 0, dcSortie = 0;   // filtre passe-haut : retire la composante continue
+  bool premier = true;
+  int32_t dcEntree = 0, dcSortie = 0;   // filtre passe-haut : retire la tension de repos du module
+  // Fréquence réelle de l'ADC, mesurée la première seconde (le mode ADC de l'I2S ne
+  // tombe pas toujours pile sur la fréquence demandée).
+  uint32_t mesureDebut = 0, mesureNb = 0, freqReelle = FREQ_MICRO;
+  int32_t somme = 0;
+  uint32_t nbSomme = 0;
 
   for (;;) {
     if (!s_active) {
       if (ouvert) {
-        i2s_driver_uninstall(PORT_MICRO);
+        microFermer();
         ouvert = false;
       }
       ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
       continue;
     }
     if (!ouvert) {
-      if (!microOuvrir()) { s_active = false; continue; }
+      if (!microOuvrir()) { vTaskDelay(pdMS_TO_TICKS(1000)); continue; }
       ouvert = true;
-      canal = MICRO_CANAL;
-      energie[0] = energie[1] = 0;
-      blocsMesures = 0;
-      dcEntree = dcSortie = 0;
+      premier = true;
+      mesureDebut = millis();
+      mesureNb = 0;
+      somme = 0;
+      nbSomme = 0;
     }
     size_t lus = 0;
     i2s_read(PORT_MICRO, brut, sizeof brut, &lus, pdMS_TO_TICKS(50));
-    size_t trames = lus / 8;
-    if (trames == 0) continue;
+    size_t nb = lus / 2;
+    if (nb == 0) continue;
 
-    // Le micro (L/R à GND) parle sur une seule des deux voies : on garde la plus vivante.
-    if (canal < 0) {
-      for (size_t i = 1; i < trames; i++)
-        for (int c = 0; c < 2; c++) {
-          int32_t d = (brut[2 * i + c] >> 14) - (brut[2 * i - 2 + c] >> 14);
-          energie[c] += (uint64_t)((int64_t)d * d);
-        }
-      if (++blocsMesures >= 30) {
-        canal = energie[1] > energie[0] ? 1 : 0;
-        Serial.printf("[Voix] Micro détecté sur la voie %d\n", canal);
+    if (mesureDebut) {
+      mesureNb += nb;
+      uint32_t ecoule = millis() - mesureDebut;
+      if (ecoule >= 1000) {
+        freqReelle = (uint32_t)((uint64_t)mesureNb * 1000 / ecoule);
+        mesureDebut = 0;
+        Serial.printf("[Voix] Micro : %u échantillons/s\n", (unsigned)freqReelle);
       }
     }
-    int c = canal < 0 ? 0 : canal;
+    // Nombre d'échantillons du micro moyennés pour un échantillon envoyé au téléphone
+    uint32_t facteur = (freqReelle + s_frequence / 2) / s_frequence;
+    if (facteur < 1) facteur = 1;
+
     size_t n = 0;
-    for (size_t i = 0; i < trames; i++) {
-      int32_t x = (brut[2 * i + c] >> 14) * s_gainMicro / 4;   // 18 bits utiles -> 16 bits environ
+    for (size_t i = 0; i < nb; i++) {
+      int32_t v = brut[i] & 0x0FFF;   // 12 bits ; les 4 bits du haut donnent le canal
+      if (premier) { dcEntree = v << 4; premier = false; }
+      somme += v;
+      if (++nbSomme < facteur) continue;
+      int32_t x = (somme << 4) / (int32_t)nbSomme;   // 12 -> 16 bits
+      somme = 0;
+      nbSomme = 0;
       int32_t y = x - dcEntree + dcSortie - (dcSortie >> 8);
       dcEntree = x;
       dcSortie = y;
-      if (y > 32767) y = 32767;
-      if (y < -32768) y = -32768;
-      sortie[n++] = (int16_t)y;
-    }
-    if (s_frequence == 8000) {   // 16 kHz -> 8 kHz : moyenne de deux échantillons
-      size_t m = 0;
-      for (size_t i = 0; i + 1 < n; i += 2) sortie[m++] = (int16_t)(((int32_t)sortie[i] + sortie[i + 1]) / 2);
-      n = m;
+      int32_t z = y * s_gainMicro / 4;
+      if (z > 32767) z = 32767;
+      if (z < -32768) z = -32768;
+      sortie[n++] = (int16_t)z;
     }
     // Trop d'avance (horloges du micro et du téléphone un peu différentes) : on jette 10 ms
     if (niveau(s_versTel, TAILLE_TEL) > s_frequence * 2 / 8) lire(s_versTel, (uint8_t *)brut, s_frequence / 50);
-    xRingbufferSend(s_versTel, sortie, n * 2, 0);
+    if (n) xRingbufferSend(s_versTel, sortie, n * 2, 0);
   }
 }
 #endif
@@ -221,12 +251,6 @@ static void tacheMicro(void *) {
 // ---------- démarrage / arrêt ----------
 
 void voixInit() {
-#if AVEC_MICRO
-  if (BROCHE_MICRO_LR >= 0) {   // L/R à l'état bas : le micro parle sur la voie gauche
-    pinMode(BROCHE_MICRO_LR, OUTPUT);
-    digitalWrite(BROCHE_MICRO_LR, LOW);
-  }
-#endif
   s_versHp = xRingbufferCreate(TAILLE_HP, RINGBUF_TYPE_BYTEBUF);
   s_versTel = xRingbufferCreate(TAILLE_TEL, RINGBUF_TYPE_BYTEBUF);
   voixSetVolume(VOLUME_APPEL_DEPART);

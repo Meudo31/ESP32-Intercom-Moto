@@ -108,9 +108,6 @@
 #ifndef GAIN_MICRO
 #define GAIN_MICRO 4
 #endif
-#ifndef MICRO_CANAL
-#define MICRO_CANAL -1
-#endif
 #ifndef SONNERIE_VOLUME
 #define SONNERIE_VOLUME 80
 #endif
@@ -119,15 +116,6 @@
 #endif
 #ifndef VOLUME_APPEL_DEPART
 #define VOLUME_APPEL_DEPART 10
-#endif
-#ifndef BROCHE_MICRO_SCK
-#define BROCHE_MICRO_SCK 25
-#endif
-#ifndef BROCHE_MICRO_WS
-#define BROCHE_MICRO_WS 32
-#endif
-#ifndef BROCHE_MICRO_SD
-#define BROCHE_MICRO_SD 35
 #endif
 #ifndef APPEL_PRIO
 #define APPEL_PRIO 3
@@ -147,9 +135,9 @@
 #ifndef VOIX_PILE
 #define VOIX_PILE 3072
 #endif
-#ifndef BROCHE_MICRO_LR
-#define BROCHE_MICRO_LR 33
-#endif
 #ifndef BROCHE_BOUTON_A_MASSE
 #define BROCHE_BOUTON_A_MASSE 2
+#endif
+#ifndef BROCHE_MICRO
+#define BROCHE_MICRO 35
 #endif

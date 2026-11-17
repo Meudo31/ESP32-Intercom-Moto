@@ -19,12 +19,10 @@ Le code compile avec PlatformIO (ESP32-WROOM-32, framework Arduino, bibliothèqu
 | MAX98357A **GAIN** | GPIO12 : gain réglable depuis l'app (6, 9 ou 12 dB). Attention, voir « Gain sur GPIO12 » ci-dessous |
 | MAX98357A sorties **+** et **−** | les deux haut-parleurs **en parallèle** (+ avec +, − avec −) |
 | Bouton A | GPIO4 et GPIO2 (le firmware met GPIO2 à GND et l'y maintient pendant la veille) |
-| Micro INMP441 **VDD** | **3V3** (surtout pas 5 V) |
-| Micro INMP441 **GND** | GND |
-| Micro INMP441 **L/R** | GPIO33 (mise à GND par le firmware : le micro parle sur la voie gauche) |
-| Micro INMP441 **SCK** | GPIO25 |
-| Micro INMP441 **WS** | GPIO32 |
-| Micro INMP441 **SD** | GPIO35 |
+| Module micro MAX9814 **VDD** | **3V3** |
+| Module micro MAX9814 **GND** | GND |
+| Module micro MAX9814 **OUT** | GPIO35 |
+| Module micro MAX9814 **GAIN** et **AR** | non branchées (gain 60 dB avec réglage automatique) |
 
 Ce brochage convient à la DevKit V1 et à la D1 mini ESP32. GPIO2 servant de masse au bouton, la LED bleue de la carte (sur GPIO2) n'indique plus l'état : elle reste éteinte (`BROCHE_LED` à -1). Pour relier le bouton directement à GND, mets `BROCHE_BOUTON_A_MASSE` à -1. GPIO2 est une broche de démarrage, mais le firmware ne la met à GND qu'une fois démarré : le flash par USB n'est pas gêné.
 
@@ -52,7 +50,7 @@ L'intercom est aussi un kit mains libres (profil Bluetooth HFP) : quand le tél�
 
 Hors appel, le bouton garde ses gestes habituels (musique, volume, veille). Si une LED est configurée (`BROCHE_LED`), elle clignote vite pendant la sonnerie et reste allumée pendant l'appel.
 
-**Il faut un micro** pour que l'interlocuteur t'entende : le haut-parleur seul ne suffit pas. Le firmware attend un **INMP441** (micro numérique I2S, environ 3 €), câblé comme dans le tableau ci-dessus. Les broches 25, 32, 33 et 35 ne jouent aucun rôle au démarrage de l'ESP32 et sont libres sur la DevKit V1 comme sur la D1 mini ESP32. On peut aussi relier L/R directement à GND et mettre `BROCHE_MICRO_LR` à -1. Sans micro, mets `AVEC_MICRO` à 0 dans `config.h` : tu entendras l'appel, l'autre n'entendra que du silence. Si l'autre t'entend trop faiblement ou trop fort, règle `GAIN_MICRO` (1 à 32, 4 par défaut).
+**Il faut un micro** pour que l'interlocuteur t'entende : le haut-parleur seul ne suffit pas. Depuis le firmware 2.3.0, c'est un **micro analogique avec son préampli** : le module **MAX9814** (environ 3 €) est conseillé, car il règle tout seul son gain (la voix reste audible sans saturer quand on parle fort). Un module MAX4466 convient aussi (régler son petit potentiomètre). Une capsule électret seule ne suffit pas : son signal (quelques millivolts) est trop faible pour l'ESP32. La sortie OUT du module va sur GPIO35, une entrée de l'ADC1 (`BROCHE_MICRO`, de 32 à 39 seulement : l'ADC2 ne marche pas avec le Bluetooth). L'ESP32 lit le micro par le « mode ADC » de son I2S0, en arrière-plan ; l'ampli est sur l'I2S1. Au premier appel, le moniteur série affiche « Micro : … échantillons/s » (environ 16 000 attendus). Sans micro, mets `AVEC_MICRO` à 0 dans `config.h` : tu entendras l'appel, l'autre n'entendra que du silence. Si l'autre t'entend trop faiblement ou trop fort, règle `GAIN_MICRO` (1 à 32, 4 par défaut).
 
 À savoir :
 - **Le téléphone doit voir les « appels »** : s'il avait été appairé avec une version plus ancienne, oublie « Intercom Moto » dans son Bluetooth puis appaire-le de nouveau, et vérifie que l'option « Appels téléphoniques » est cochée.

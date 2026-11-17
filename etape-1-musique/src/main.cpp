@@ -8,7 +8,7 @@
 //     Boutons B et C en option (AVEC_BOUTONS dans config.h).
 //  4. Appels (depuis 2.0.0) : sonnerie data/sonnerie.wav à l'appel entrant ; bouton A :
 //     court = décrocher, court + court = rejeter ; en appel : court = raccrocher.
-//     Micro I2S INMP441 pour que l'interlocuteur entende.
+//     Micro analogique (module MAX9814) sur GPIO35 pour que l'interlocuteur entende.
 //  5. L'app Android « Intercom Moto » se connecte en Bluetooth basse consommation (BLE) :
 //     elle affiche toutes les infos, envoie les commandes et met à jour le firmware.
 //
@@ -16,7 +16,7 @@
 //   musique_bt   pile Bluetooth classique (ses propres tâches) -> audio (I2S)
 //   appel        profil mains libres (HFP) : tâche « appel » (états, sonnerie, source de l'ampli)
 //   sonnerie     tâche qui joue data/sonnerie.wav en boucle
-//   voix         tâches « voix_hp » (téléphone -> ampli) et « voix_micro » (INMP441 -> téléphone)
+//   voix         tâches « voix_hp » (téléphone -> ampli) et « voix_micro » (micro par l'ADC -> téléphone)
 //   commandes    tâche qui exécute les commandes (file d'attente) des boutons et de l'app
 //   boutons_task tâche qui lit les boutons
 //   ble_task     tâche BLE : données 4 fois par seconde, commandes, mise à jour (ble_ota)

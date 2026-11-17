@@ -1,4 +1,4 @@
-// Voix d'un appel (HFP) : le son du téléphone part vers l'ampli, celui du micro INMP441
+// Voix d'un appel (HFP) : le son du téléphone part vers l'ampli, celui du micro analogique
 // part vers le téléphone. Le son d'appel est en 16 bits mono, 8 000 Hz (ou 16 000 Hz en mSBC).
 #pragma once
 #include <stdint.h>

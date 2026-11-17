@@ -4,7 +4,7 @@
 #include "driver/i2s.h"
 #include "parametres.h"
 
-#define PORT_HP I2S_NUM_0
+#define PORT_HP I2S_NUM_1   // l'I2S0 est pris par le micro (mode ADC)
 
 static volatile uint8_t s_volume = 100;
 static volatile int32_t s_gainQ15 = 32768;    // 32768 = 1,0
